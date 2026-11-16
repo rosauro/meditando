@@ -78,6 +78,9 @@ class MainActivity : Activity() {
     private lateinit var tvBellsSub: TextView
     private lateinit var btnLabels: TextView
     private lateinit var swPrep: Switch
+    private lateinit var btnSave: TextView
+    /** Contenedor del selector «Aviso al sonar» del formulario. */
+    private lateinit var formModeBox: LinearLayout
 
     // Vista B: en curso
     private lateinit var runView: LinearLayout
@@ -85,6 +88,8 @@ class MainActivity : Activity() {
     private lateinit var runRing: RingTimerView
     private lateinit var tvRunLabel: TextView
     private lateinit var tvRunSub: TextView
+    /** Contenedor del selector «Aviso» de la vista en curso. */
+    private lateinit var runModeBox: LinearLayout
 
     private var inRun = false
     /** elapsedRealtime en el que se pulsó «Comenzar»; 0 si no hay arranque pendiente. */
@@ -104,6 +109,7 @@ class MainActivity : Activity() {
         runView = buildRun()
         configWrap = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
         configWrap.addView(configView, LinearLayout.LayoutParams(MATCH, 0, 1f))
+        configWrap.addView(Ui.primaryButton(this, "Comenzar") { startFromForm() }, Ui.lp(this, t = 8))
         configWrap.addView(Ui.tabBar(this, 0), Ui.lp(this, t = 8))
         root.addView(configWrap, FrameLayout.LayoutParams(MATCH, MATCH))
         root.addView(runView, FrameLayout.LayoutParams(MATCH, MATCH))
@@ -118,6 +124,7 @@ class MainActivity : Activity() {
 
     override fun onResume() {
         super.onResume()
+        fillModeSelectors()
         handler.removeCallbacks(ticker)
         handler.post(ticker)
     }
@@ -240,16 +247,24 @@ class MainActivity : Activity() {
         prepRow.addView(swPrep)
         col.addView(prepRow, Ui.lp(this, t = 28))
 
-        // Pie
-        col.addView(Ui.primaryButton(this, "Comenzar") { startFromForm() }, Ui.lp(this, t = 32))
-        col.addView(Ui.secondaryButton(this, "Guardar como preselección") { saveAsPreset() },
-            Ui.lp(this, t = 12, b = 24))
+        // Aviso al sonar (bongs / vibración / ambos)
+        col.addView(Ui.text(this, "AVISO AL SONAR", 13f, MUTED, 2).apply { letterSpacing = 0.12f },
+            Ui.lp(this, t = 28, b = 10))
+        formModeBox = column()
+        col.addView(formModeBox, Ui.lp(this))
+
+        // Pie (el botón «Comenzar» va fijo en configWrap)
+        btnSave = Ui.secondaryButton(this, "Guardar como preselección") { saveAsPreset() }
+        col.addView(btnSave, Ui.lp(this, t = 24, b = 24))
 
         return ScrollView(this).apply { addView(col) }
     }
 
     /** Vuelve a pintar el formulario a partir del estado (anillo, campanas, chips, textos) y lo guarda. */
     private fun refreshForm() {
+        // Con una preselección elegida el nombre ya se ve en la tarjeta: se oculta el campo
+        etName.visibility = if (selectedName == null) View.VISIBLE else View.GONE
+        btnSave.text = if (selectedName != null) "Guardar cambios" else "Guardar como preselección"
         if (etName.text.toString() != nameText) etName.setText(nameText)
         val n = bellCount()
 
@@ -481,6 +496,11 @@ class MainActivity : Activity() {
             return
         }
         saveCfg()
+        // Aviso si el volumen multimedia está a cero y el modo usa sonido
+        val am = getSystemService(android.media.AudioManager::class.java)
+        if (app.meditando.Settings(this).sound && am.getStreamVolume(android.media.AudioManager.STREAM_MUSIC) == 0) {
+            toast("El volumen multimedia está a cero: no se oirán los bongs")
+        }
         MeditationService.start(this, minutes, bellCount(), prep, nameText.trim().ifEmpty { selectedName ?: "" }, labels)
         startAt = SystemClock.elapsedRealtime()
         showRun()
@@ -508,6 +528,8 @@ class MainActivity : Activity() {
         col.addView(tvRunLabel, Ui.lp(this, t = 32))
         col.addView(tvRunSub, Ui.lp(this, t = 16))
         col.addView(spacer(1f))
+        runModeBox = column()
+        col.addView(runModeBox, Ui.lp(this, t = 24))
         col.addView(Ui.secondaryButton(this, "Terminar") {
             MeditationService.stop(this)
             startAt = 0L
@@ -581,6 +603,21 @@ class MainActivity : Activity() {
             if (lastBellCounter != -1) runRing.ripple()
             lastBellCounter = SessionState.bellCounter
         }
+    }
+
+    /**
+     * Reconstruye los selectores de «Aviso» (formulario y vista en curso) con el modo guardado en Settings.
+     * Se llama en onResume, así se refleja un cambio hecho en Ajustes.
+     */
+    private fun fillModeSelectors() {
+        // Nombre completo: android.provider.Settings está importado en este fichero
+        val s = app.meditando.Settings(this)
+        formModeBox.removeAllViews()
+        formModeBox.addView(Ui.modeSelector(this, s), Ui.lp(this))
+        runModeBox.removeAllViews()
+        runModeBox.addView(Ui.text(this, "AVISO", 13f, MUTED, 2, true).apply { letterSpacing = 0.12f },
+            Ui.lp(this, b = 10))
+        runModeBox.addView(Ui.modeSelector(this, s), Ui.lp(this))
     }
 
     /** Vista de arranque: el servicio aún no ha publicado su estado. */

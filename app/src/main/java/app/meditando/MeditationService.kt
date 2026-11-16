@@ -30,6 +30,8 @@ class MeditationService : Service() {
         const val EXTRA_PREP = "prep"
         const val EXTRA_NAME = "name"
         const val EXTRA_LABELS = "labels"
+        private const val LATE_MS = 8_000L        // un aviso así de atrasado, en una sesión recuperada, ya no suena
+        private const val LATE_FINAL_MS = 60_000L // el bong final pierde su sentido pasado este tiempo
 
         private const val CHANNEL_ID = "meditando"
         private const val NOTIF_ID = 1
@@ -63,15 +65,26 @@ class MeditationService : Service() {
     private var sessionName = ""
     private var startWallMs = 0L
     private val tick = Runnable { fireDue() }
+    private var restored = false // true solo durante la puesta al día de una sesión recuperada
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
             ACTION_START -> startSession(intent)
             ACTION_STOP -> stopByUser()
-            ACTION_TICK -> if (SessionState.running) fireDue() else stopSelf()
+            ACTION_TICK -> onTick()
             else -> if (!SessionState.running) stopSelf()
         }
         return START_NOT_STICKY
+    }
+
+    /** Alarma: si el proceso fue matado y la sesión sigue vigente, se reconstruye desde disco. */
+    private fun onTick() {
+        if (SessionState.running) { fireDue(); return }
+        if (!restoreSession()) {
+            // Llegó como servicio en primer plano: hay que llamar a startForeground antes de salir
+            goForeground(buildNotif("", SystemClock.elapsedRealtime()))
+            stopSelf()
+        }
     }
 
     private fun startSession(intent: Intent) {
@@ -80,16 +93,25 @@ class MeditationService : Service() {
             goForeground(buildNotif(SessionState.presetName, SessionState.medEnd))
             return
         }
-        plannedMin = intent.getIntExtra(EXTRA_MIN, 1).coerceAtLeast(1) // evita 0 o negativos
+        val min = intent.getIntExtra(EXTRA_MIN, 1).coerceAtLeast(1) // evita 0 o negativos
         val labels = intent.getStringArrayExtra(EXTRA_LABELS)?.toList() ?: emptyList()
         val bells = if (labels.isNotEmpty()) (labels.size - 1).coerceAtLeast(0) else intent.getIntExtra(EXTRA_BELLS, 0)
         val prep = intent.getBooleanExtra(EXTRA_PREP, false)
-        sessionName = intent.getStringExtra(EXTRA_NAME) ?: ""
+        val name = intent.getStringExtra(EXTRA_NAME) ?: ""
+        val t0El = SystemClock.elapsedRealtime()
+        val t0Wall = System.currentTimeMillis()
+        saveState(min, bells, prep, name, labels, t0El, t0Wall)
+        begin(min, bells, prep, name, labels, t0El, t0Wall)
+    }
 
-        val t0 = SystemClock.elapsedRealtime()
-        val prepEnd = t0 + (if (prep) PREP_MS else 0L)
+    /** Monta la sesión (nueva o recuperada) a partir de su instante de inicio [t0El] (elapsedRealtime). */
+    private fun begin(min: Int, bells: Int, prep: Boolean, name: String, labels: List<String>, t0El: Long, t0Wall: Long) {
+        plannedMin = min
+        sessionName = name
+        val prepEnd = t0El + (if (prep) PREP_MS else 0L)
         val medEnd = prepEnd + plannedMin * 60_000L
         val offsets = Schedule.bellOffsetsSec(plannedMin, bells)
+        startWallMs = t0Wall + (prepEnd - t0El)
         SessionState.presetName = sessionName
         SessionState.prepEnd = prepEnd
         SessionState.medStart = prepEnd
@@ -101,15 +123,14 @@ class MeditationService : Service() {
         SessionState.bellCounter = 0
         SessionState.currentLabel = if (prep) "" else labels.getOrElse(0) { "" } // el 1.º texto suena al empezar
         SessionState.phase = if (prep) SessionState.PREP else SessionState.MEDITATING
-        if (!prep) startWallMs = System.currentTimeMillis()
 
         // Primer plano lo antes posible
         goForeground(buildNotif(sessionName, medEnd, SessionState.currentLabel.ifEmpty { "Meditando · $sessionName" }))
 
-        // Mantener la CPU despierta toda la sesión + margen
+        // Mantener la CPU despierta lo que queda de sesión + margen
         val pm = getSystemService(Context.POWER_SERVICE) as PowerManager
         wakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "meditando:sesion").apply {
-            acquire((medEnd - t0) + TAIL_MS)
+            acquire((medEnd - SystemClock.elapsedRealtime()).coerceAtLeast(0L) + TAIL_MS)
         }
 
         events = buildList {
@@ -122,45 +143,79 @@ class MeditationService : Service() {
         scheduleNext()
     }
 
+    // --- Persistencia: si el sistema mata el proceso, la alarma exacta reconstruye la sesión ---
+    private fun prefs() = getSharedPreferences("session", Context.MODE_PRIVATE)
+
+    private fun saveState(min: Int, bells: Int, prep: Boolean, name: String, labels: List<String>, t0El: Long, t0Wall: Long) {
+        prefs().edit().clear().putBoolean("active", true).putInt("min", min).putInt("bells", bells)
+            .putBoolean("prep", prep).putString("name", name).putString("labels", Labels.join(labels))
+            .putLong("t0El", t0El).putLong("t0Wall", t0Wall).apply()
+    }
+
+    private fun clearState() { prefs().edit().clear().apply() }
+
+    /** Recupera una sesión vigente tras morir el proceso. Los avisos ya pasados se saltan sin sonar. */
+    private fun restoreSession(): Boolean {
+        val p = prefs()
+        if (!p.getBoolean("active", false)) return false
+        val t0El = p.getLong("t0El", 0L)
+        if (t0El > SystemClock.elapsedRealtime()) { clearState(); return false } // el móvil se reinició
+        val labels = Labels.parse(p.getString("labels", "") ?: "")
+        begin(p.getInt("min", 1), p.getInt("bells", 0), p.getBoolean("prep", false),
+            p.getString("name", "") ?: "", labels, t0El, p.getLong("t0Wall", System.currentTimeMillis()))
+        restored = true
+        fireDue()
+        restored = false
+        if (SessionState.running && labels.isNotEmpty()) updateNotif()
+        return true
+    }
+
     /** Dispara todos los eventos ya vencidos (Handler y alarma pueden llamar a la vez) y planifica el siguiente. */
     private fun fireDue() {
         while (SessionState.running) {
             val ev = events.getOrNull(idx) ?: break
-            if (ev.at > SystemClock.elapsedRealtime() + 50) break
-            fire(ev)
+            val now = SystemClock.elapsedRealtime()
+            if (ev.at > now + 50) break
+            val limit = if (ev.kind == Kind.FINAL) LATE_FINAL_MS else LATE_MS
+            fire(ev, silent = restored && now - ev.at > limit)
         }
         scheduleNext()
     }
 
-    private fun fire(ev: Ev) {
+    private fun fire(ev: Ev, silent: Boolean = false) {
         idx++
         when (ev.kind) {
             Kind.INICIO_SUAVE -> {
                 startWallMs = System.currentTimeMillis()
                 SessionState.phase = SessionState.MEDITATING
                 SessionState.currentLabel = SessionState.labels.getOrElse(0) { "" }
-                if (SessionState.labels.isNotEmpty()) updateNotif()
-                feedback(false)
+                if (!silent) {
+                    if (SessionState.labels.isNotEmpty()) updateNotif()
+                    feedback(false)
+                }
             }
             Kind.CAMPANA -> {
                 SessionState.bellsDone++
                 SessionState.currentLabel = SessionState.labels.getOrElse(SessionState.bellsDone) { "" }
                 SessionState.bellCounter++
-                feedback(false)
-                if (SessionState.labels.isNotEmpty()) updateNotif()
+                if (!silent) {
+                    feedback(false)
+                    if (SessionState.labels.isNotEmpty()) updateNotif()
+                }
             }
-            Kind.FINAL -> finish()
+            Kind.FINAL -> finish(silent)
         }
         updateState()
     }
 
-    private fun finish() {
+    private fun finish(silent: Boolean = false) {
         SessionState.phase = SessionState.FINISHING
         saveSession(SessionRec(0, startWallMs, plannedMin * 60, plannedMin * 60, true, sessionName))
-        feedback(true) { stopSelf() }
+        clearState() // ya guardada: no debe recuperarse otra vez
+        if (silent) stopSelf() else feedback(true) { stopSelf() }
     }
 
-    private fun tickPi() = PendingIntent.getService(
+    private fun tickPi() = PendingIntent.getForegroundService(
         this, 2, Intent(this, MeditationService::class.java).setAction(ACTION_TICK),
         PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
 
@@ -196,6 +251,7 @@ class MeditationService : Service() {
                 saveSession(SessionRec(0, startWallMs, plannedMin * 60, actualSec, false, sessionName))
             }
         }
+        clearState()
         cancelAlarm()
         handler.removeCallbacks(tick)
         events = emptyList()
@@ -265,6 +321,7 @@ class MeditationService : Service() {
 
     override fun onDestroy() {
         cancelAlarm()
+        clearState()
         handler.removeCallbacksAndMessages(null)
         players.forEach { runCatching { it.release() } } // puede estar ya liberado: no pasa nada
         players.clear()

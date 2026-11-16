@@ -2,11 +2,13 @@ package app.meditando
 
 import android.content.Context
 import android.media.AudioAttributes
+import android.media.AudioFocusRequest
 import android.media.AudioManager
 import android.media.MediaPlayer
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
+import android.os.VibrationAttributes
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
@@ -27,8 +29,14 @@ object Feedback {
             main.postDelayed({ onDone?.invoke() }, if (final) 2500L else 1500L)
             return null
         }
-        mp.setOnCompletionListener { p -> p.release(); onDone?.invoke() }
-        mp.setOnErrorListener { p, _, _ -> p.release(); onDone?.invoke(); true }
+        // Foco de audio: la música o el podcast que suene se atenúa mientras suena el bong
+        val am = ctx.getSystemService(AudioManager::class.java)
+        val focus = AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK)
+            .setAudioAttributes(AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_MEDIA)
+                .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC).build()).build()
+        am.requestAudioFocus(focus)
+        mp.setOnCompletionListener { p -> p.release(); am.abandonAudioFocusRequest(focus); onDone?.invoke() }
+        mp.setOnErrorListener { p, _, _ -> p.release(); am.abandonAudioFocusRequest(focus); onDone?.invoke(); true }
         mp.start()
         return mp
     }
@@ -56,6 +64,13 @@ object Feedback {
         }
         val effect = if (final) VibrationEffect.createWaveform(longArrayOf(0, 600, 250, 600, 250, 900), -1)
         else VibrationEffect.createOneShot(250, 120)
-        vib?.vibrate(effect)
+        // Con uso «alarma» la vibración no se descarta con la pantalla apagada ni en «No molestar»
+        if (Build.VERSION.SDK_INT >= 33) {
+            vib?.vibrate(effect, VibrationAttributes.createForUsage(VibrationAttributes.USAGE_ALARM))
+        } else {
+            @Suppress("DEPRECATION")
+            vib?.vibrate(effect, AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_ALARM)
+                .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION).build())
+        }
     }
 }

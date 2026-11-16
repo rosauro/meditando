@@ -1,9 +1,16 @@
 package app.meditando
 
 import android.app.Activity
+import android.app.AlarmManager
+import android.app.NotificationManager
+import android.content.Intent
 import android.content.res.ColorStateList
+import android.net.Uri
+import android.os.Build
 import android.os.Bundle
+import android.os.PowerManager
 import android.view.Gravity
+import android.view.View
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.SeekBar
@@ -12,6 +19,7 @@ import android.widget.SeekBar
 class SettingsActivity : Activity() {
     private lateinit var settings: Settings
     private lateinit var modeCard: LinearLayout
+    private lateinit var reliabilityCard: LinearLayout
 
     private val modes = listOf(
         "Bongs" to Settings.MODE_BELLS,
@@ -47,6 +55,11 @@ class SettingsActivity : Activity() {
             addView(Ui.text(c, "Se aplica sobre el volumen multimedia del móvil.", 14f, Ui.MUTED), Ui.lp(c, t = 20))
         }, Ui.lp(c))
 
+        // FIABILIDAD: el contenido se rellena en onResume()
+        root.addView(Ui.text(c, "FIABILIDAD", 12f, Ui.MUTED), Ui.lp(c, t = 28, b = 10, l = 4))
+        reliabilityCard = Ui.card(c)
+        root.addView(reliabilityCard, Ui.lp(c))
+
         // ACERCA DE
         val version = runCatching { packageManager.getPackageInfo(packageName, 0).versionName }
             .getOrNull() ?: "?"
@@ -66,6 +79,84 @@ class SettingsActivity : Activity() {
         page.addView(Ui.tabBar(c, 2), Ui.lp(c, t = 8))
         Ui.page(c, page)
         setContentView(page)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        renderReliability()
+    }
+
+    /** Reconstruye la tarjeta de fiabilidad con el estado real (se llama al volver de los ajustes del sistema). */
+    private fun renderReliability() {
+        val c = this
+        reliabilityCard.removeAllViews()
+        val batteryOk = getSystemService(PowerManager::class.java).isIgnoringBatteryOptimizations(packageName)
+        val notifOk = getSystemService(NotificationManager::class.java).areNotificationsEnabled()
+        // Alarmas exactas: permiso propio desde Android 12 (API 31); antes siempre disponibles
+        val exactOk = Build.VERSION.SDK_INT < 31 || getSystemService(AlarmManager::class.java).canScheduleExactAlarms()
+
+        reliabilityCard.addView(reliabilityRow(batteryOk, "Batería sin restricciones",
+            if (batteryOk) "Correcto: los avisos llegan con la pantalla apagada."
+            else "Android puede frenar la app en segundo plano y retrasar los avisos.",
+            "Permitir") {
+            launch(
+                Intent(android.provider.Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, Uri.parse("package:$packageName")),
+                Intent(android.provider.Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS))
+        }, Ui.lp(c))
+
+        reliabilityCard.addView(reliabilityRow(notifOk, "Notificaciones",
+            if (notifOk) "Correcto: la sesión en curso se muestra en la barra de estado."
+            else "Desactivadas: no se mostrará la notificación de la sesión en curso.",
+            "Activar") {
+            startActivity(Intent(android.provider.Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+                .putExtra(android.provider.Settings.EXTRA_APP_PACKAGE, packageName))
+        }, Ui.lp(c, t = 16))
+
+        reliabilityCard.addView(reliabilityRow(exactOk, "Alarmas exactas",
+            if (exactOk) "Correcto: los avisos suenan en el segundo previsto."
+            else "Sin este permiso, los avisos pueden llegar con retraso.",
+            "Permitir") {
+            launch(
+                Intent(android.provider.Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM, Uri.parse("package:$packageName")),
+                Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:$packageName")))
+        }, Ui.lp(c, t = 16))
+
+        reliabilityCard.addView(Ui.text(c,
+            "En Xiaomi, Oppo, Samsung u otras marcas, activa también «Inicio automático» y «Sin restricciones» " +
+                "en los ajustes de batería de esta app, y no la cierres desde recientes.",
+            13f, Ui.MUTED).apply { setLineSpacing(0f, 1.3f) }, Ui.lp(c, t = 20))
+        reliabilityCard.addView(Ui.linkButton(c, "Abrir ajustes de la app") {
+            startActivity(Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:$packageName")))
+        }, Ui.lp(c, Ui.WRAP, Ui.WRAP, t = 4))
+    }
+
+    /** Fila con punto de estado (verde = bien, ámbar = falta), título, explicación y botón solo si falta. */
+    private fun reliabilityRow(ok: Boolean, title: String, detail: String, buttonLabel: String,
+                               onAction: () -> Unit): LinearLayout {
+        val c = this
+        val dot = View(c).apply {
+            background = Ui.shape(c, if (ok) 0xFF7FB77E.toInt() else 0xFFE0A458.toInt(), 5)
+        }
+        val column = LinearLayout(c).apply { orientation = LinearLayout.VERTICAL }
+        column.addView(Ui.text(c, title, 16f, Ui.TEXT, 2))
+        column.addView(Ui.text(c, detail, 13f, Ui.MUTED), Ui.lp(c, t = 4))
+        if (!ok) {
+            column.addView(Ui.secondaryButton(c, buttonLabel, onAction).apply {
+                textSize = 14f
+                minHeight = Ui.dp(c, 40)
+            }, Ui.lp(c, Ui.WRAP, Ui.WRAP, t = 10))
+        }
+        return LinearLayout(c).apply {
+            orientation = LinearLayout.HORIZONTAL
+            addView(dot, LinearLayout.LayoutParams(Ui.dp(c, 10), Ui.dp(c, 10))
+                .apply { setMargins(0, Ui.dp(c, 6), Ui.dp(c, 12), 0) })
+            addView(column, LinearLayout.LayoutParams(0, Ui.WRAP, 1f))
+        }
+    }
+
+    /** Abre [primary]; si el sistema no la resuelve, abre [fallback]. */
+    private fun launch(primary: Intent, fallback: Intent) {
+        try { startActivity(primary) } catch (e: Exception) { startActivity(fallback) }
     }
 
     /** Reconstruye la fila de modos y el texto explicativo del modo elegido. */

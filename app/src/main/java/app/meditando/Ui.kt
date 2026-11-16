@@ -113,6 +113,25 @@ object Ui {
         setPadding(dp(c, 18), dp(c, 18), dp(c, 18), dp(c, 18))
     }
 
+    /** Selector de aviso (Bongs / Vibración / Ambos): guarda en Settings al pulsar y se redibuja solo. */
+    fun modeSelector(c: Context, settings: Settings, onChange: (() -> Unit)? = null): LinearLayout {
+        val row = LinearLayout(c).apply { orientation = LinearLayout.HORIZONTAL }
+        fun render() {
+            row.removeAllViews()
+            listOf("Bongs" to Settings.MODE_BELLS, "Vibración" to Settings.MODE_VIBRATION, "Ambos" to Settings.MODE_BOTH)
+                .forEach { (label, mode) ->
+                    row.addView(chip(c, label, settings.mode == mode) {
+                        settings.mode = mode
+                        render()
+                        onChange?.invoke()
+                    }.apply { setSingleLine(true); setPadding(dp(c, 4), 0, dp(c, 4), 0); textSize = 14f },
+                        LinearLayout.LayoutParams(0, WRAP, 1f).apply { setMargins(dp(c, 4), 0, dp(c, 4), 0) })
+                }
+        }
+        render()
+        return row
+    }
+
     private val TABS = listOf(
         Triple("Meditar", R.drawable.ic_tab_meditar, MainActivity::class.java),
         Triple("Historial", R.drawable.ic_tab_historial, HistoryActivity::class.java),
