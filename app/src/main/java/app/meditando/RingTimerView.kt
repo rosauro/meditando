@@ -36,6 +36,7 @@ class RingTimerView(c: Context) : View(c) {
     private fun paint(style: Paint.Style = Paint.Style.FILL) = Paint(Paint.ANTI_ALIAS_FLAG).apply { this.style = style }
     private val track = paint(Paint.Style.STROKE).apply { color = Ui.SURFACE2 }
     private val arc = paint(Paint.Style.STROKE).apply { color = Ui.GOLD; strokeCap = Paint.Cap.ROUND }
+    private val startMark = paint(Paint.Style.STROKE).apply { color = Ui.TEXT; strokeCap = Paint.Cap.ROUND }
     private val dot = paint()
     private val dotRing = paint(Paint.Style.STROKE)
     private val glow = paint().apply { color = Ui.GOLD }
@@ -111,6 +112,10 @@ class RingTimerView(c: Context) : View(c) {
         canvas.drawCircle(cx, cy, r, track)
         rect.set(cx - r, cy - r, cx + r, cy + r)
         if (shown > 0f) canvas.drawArc(rect, -90f, 360f * shown, false, arc)
+
+        // raya de inicio/fin en lo alto
+        startMark.strokeWidth = stroke * 0.4f
+        canvas.drawLine(cx, cy - r - stroke * 1.25f, cx, cy - r + stroke * 1.25f, startMark)
 
         // puntos de campana
         val dr = stroke * 0.85f

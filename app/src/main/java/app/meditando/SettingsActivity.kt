@@ -31,7 +31,6 @@ class SettingsActivity : Activity() {
         modeCard = Ui.card(c)
 
         val root = LinearLayout(c).apply { orientation = LinearLayout.VERTICAL }
-        root.addView(Ui.linkButton(c, "‹ Volver") { finish() }, Ui.lp(c))
         root.addView(Ui.text(c, "Ajustes", 28f, Ui.TEXT, 0), Ui.lp(c, t = 8, b = 8))
 
         // AVISO
@@ -62,9 +61,11 @@ class SettingsActivity : Activity() {
                 15f).apply { setLineSpacing(0f, 1.3f) }, Ui.lp(c, t = 16))
         }, Ui.lp(c))
 
-        val scroll = ScrollView(c).apply { setBackgroundColor(Ui.BG); addView(root) }
-        Ui.page(c, root)
-        setContentView(scroll)
+        val page = LinearLayout(c).apply { orientation = LinearLayout.VERTICAL }
+        page.addView(ScrollView(c).apply { addView(root) }, LinearLayout.LayoutParams(Ui.MATCH, 0, 1f))
+        page.addView(Ui.tabBar(c, 2), Ui.lp(c, t = 8))
+        Ui.page(c, page)
+        setContentView(page)
     }
 
     /** Reconstruye la fila de modos y el texto explicativo del modo elegido. */
@@ -76,7 +77,7 @@ class SettingsActivity : Activity() {
             row.addView(Ui.chip(c, name, settings.mode == m) {
                 settings.mode = m
                 renderMode()
-            }, LinearLayout.LayoutParams(0, Ui.WRAP, 1f).apply { setMargins(Ui.dp(c, 4), 0, Ui.dp(c, 4), 0) })
+            }.apply { setSingleLine(true); setPadding(Ui.dp(c, 4), 0, Ui.dp(c, 4), 0); textSize = 14f }, LinearLayout.LayoutParams(0, Ui.WRAP, 1f).apply { setMargins(Ui.dp(c, 4), 0, Ui.dp(c, 4), 0) })
         }
         modeCard.addView(row, Ui.lp(c))
         modeCard.addView(Ui.text(c, modeHints.getValue(settings.mode), 14f, Ui.MUTED), Ui.lp(c, t = 16))

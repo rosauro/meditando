@@ -15,4 +15,10 @@ object Schedule {
         val total = durationMin * 60
         return (1..n).map { k -> Math.round(total.toDouble() * k / (n + 1)).toInt() }
     }
+
+    /** Posición de las campanas intermedias en el anillo (0..1): 1 → [0.5]; 2 → [1/3, 2/3]. El inicio/fin es la raya en lo alto. */
+    fun tickFractions(bells: Int): List<Float> {
+        val n = bells.coerceIn(0, MAX_BELLS)
+        return (1..n).map { it / (n + 1f) }
+    }
 }

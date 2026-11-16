@@ -1,6 +1,8 @@
 package app.meditando
 
 import android.app.Activity
+import android.content.Intent
+import android.content.res.ColorStateList
 import android.content.Context
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
@@ -109,6 +111,40 @@ object Ui {
         orientation = LinearLayout.VERTICAL
         background = shape(c, SURFACE, 22)
         setPadding(dp(c, 18), dp(c, 18), dp(c, 18), dp(c, 18))
+    }
+
+    private val TABS = listOf(
+        Triple("Meditar", R.drawable.ic_tab_meditar, MainActivity::class.java),
+        Triple("Historial", R.drawable.ic_tab_historial, HistoryActivity::class.java),
+        Triple("Ajustes", R.drawable.ic_tab_ajustes, SettingsActivity::class.java),
+    )
+
+    /** Barra de pestañas inferior flotante. [current]: 0 Meditar, 1 Historial, 2 Ajustes. */
+    fun tabBar(a: Activity, current: Int): LinearLayout = LinearLayout(a).apply {
+        orientation = LinearLayout.HORIZONTAL
+        background = shape(a, SURFACE, 28, GOLD_DIM, 1)
+        setPadding(dp(a, 8), dp(a, 6), dp(a, 8), dp(a, 6))
+        TABS.forEachIndexed { i, (label, icon, dest) ->
+            val color = if (i == current) GOLD else MUTED
+            addView(TextView(a).apply {
+                text = label; textSize = 11f; typeface = font(2); setTextColor(color)
+                gravity = Gravity.CENTER; includeFontPadding = false
+                setCompoundDrawablesRelativeWithIntrinsicBounds(0, icon, 0, 0)
+                compoundDrawableTintList = ColorStateList.valueOf(color)
+                compoundDrawablePadding = dp(a, 4)
+                setPadding(0, dp(a, 6), 0, dp(a, 6))
+                press(this)
+                setOnClickListener {
+                    if (i == current) return@setOnClickListener
+                    it.performHapticFeedback(HapticFeedbackConstants.CONTEXT_CLICK)
+                    val intent = Intent(a, dest).addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION)
+                    if (i == 0) intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+                    a.startActivity(intent)
+                    if (current != 0) a.finish()
+                    a.overridePendingTransition(0, 0)
+                }
+            }, LinearLayout.LayoutParams(0, WRAP, 1f))
+        }
     }
 
     /** Fondo de la ventana y relleno con las barras del sistema (edge-to-edge). */

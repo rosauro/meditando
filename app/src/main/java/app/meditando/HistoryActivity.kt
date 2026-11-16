@@ -29,14 +29,15 @@ class HistoryActivity : Activity() {
         val c = this
         body = LinearLayout(c).apply { orientation = LinearLayout.VERTICAL }
 
-        val root = LinearLayout(c).apply { orientation = LinearLayout.VERTICAL }
-        root.addView(Ui.linkButton(c, "‹ Volver") { finish() }, Ui.lp(c))
-        root.addView(Ui.text(c, "Historial", 28f, Ui.TEXT, 0), Ui.lp(c, t = 8, b = 8))
-        root.addView(body, Ui.lp(c))
+        val content = LinearLayout(c).apply { orientation = LinearLayout.VERTICAL }
+        content.addView(Ui.text(c, "Historial", 28f, Ui.TEXT, 0), Ui.lp(c, t = 8, b = 8))
+        content.addView(body, Ui.lp(c))
 
-        val scroll = ScrollView(c).apply { setBackgroundColor(Ui.BG); addView(root) }
-        Ui.page(c, root)
-        setContentView(scroll)
+        val page = LinearLayout(c).apply { orientation = LinearLayout.VERTICAL }
+        page.addView(ScrollView(c).apply { addView(content) }, LinearLayout.LayoutParams(Ui.MATCH, 0, 1f))
+        page.addView(Ui.tabBar(c, 1), Ui.lp(c, t = 8))
+        Ui.page(c, page)
+        setContentView(page)
         refresh()
     }
 

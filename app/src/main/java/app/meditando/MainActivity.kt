@@ -61,9 +61,14 @@ class MainActivity : Activity() {
     private var prep = false
     private var labels: List<String> = emptyList()
     private var selectedName: String? = null
+    /** Texto del campo «Nombre»; es la fuente de verdad del nombre de la meditación. */
+    private var nameText = ""
+    private lateinit var etName: EditText
 
     // Vista A: configuración
     private lateinit var configView: ScrollView
+    /** Contenedor de la vista A: configView + barra inferior (la barra solo existe en el inicio). */
+    private lateinit var configWrap: LinearLayout
     private lateinit var presetsBox: LinearLayout
     private lateinit var ring: RingTimerView
     private lateinit var chipsBox: LinearLayout
@@ -97,7 +102,10 @@ class MainActivity : Activity() {
         Ui.page(this, root)
         configView = buildConfig()
         runView = buildRun()
-        root.addView(configView, FrameLayout.LayoutParams(MATCH, MATCH))
+        configWrap = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+        configWrap.addView(configView, LinearLayout.LayoutParams(MATCH, 0, 1f))
+        configWrap.addView(Ui.tabBar(this, 0), Ui.lp(this, t = 8))
+        root.addView(configWrap, FrameLayout.LayoutParams(MATCH, MATCH))
         root.addView(runView, FrameLayout.LayoutParams(MATCH, MATCH))
         setContentView(root)
 
@@ -135,8 +143,6 @@ class MainActivity : Activity() {
             gravity = Gravity.CENTER_VERTICAL
         }
         head.addView(Ui.text(this, "Meditando", 28f, TEXT, 0), LinearLayout.LayoutParams(0, Ui.WRAP, 1f))
-        head.addView(Ui.linkButton(this, "Historial") { startActivity(Intent(this, HistoryActivity::class.java)) })
-        head.addView(Ui.linkButton(this, "Ajustes") { startActivity(Intent(this, SettingsActivity::class.java)) })
         col.addView(head, Ui.lp(this, t = 8))
 
         // Preselecciones: tarjetas horizontales
@@ -147,6 +153,18 @@ class MainActivity : Activity() {
             isHorizontalScrollBarEnabled = false
             addView(presetsBox)
         })
+
+        // Nombre de la meditación (visible siempre: al crear una nueva se escribe aquí)
+        etName = EditText(this).apply {
+            hint = "Nombre de la meditación"; setSingleLine(true); textSize = 20f; typeface = Ui.font(0)
+            setTextColor(TEXT); setHintTextColor(MUTED)
+            background = Ui.shape(this@MainActivity, SURFACE, 16)
+            setPadding(dp(18), dp(14), dp(18), dp(14))
+            inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_CAP_SENTENCES
+            imeOptions = android.view.inputmethod.EditorInfo.IME_ACTION_DONE
+            onChanged { nameText = text.toString() }
+        }
+        col.addView(etName, Ui.lp(this, t = 20))
 
         // Anillo: toque = teclear minutos
         ring = RingTimerView(this).apply { setOnClickListener { askMinutes() } }
@@ -232,11 +250,12 @@ class MainActivity : Activity() {
 
     /** Vuelve a pintar el formulario a partir del estado (anillo, campanas, chips, textos) y lo guarda. */
     private fun refreshForm() {
+        if (etName.text.toString() != nameText) etName.setText(nameText)
         val n = bellCount()
 
         ring.centerText = minutes.toString()
         ring.subText = "minutos"
-        ring.ticks = Schedule.bellOffsetsSec(minutes, n).map { it / (minutes * 60f) }
+        ring.ticks = Schedule.tickFractions(n)
         ring.setProgress(0f, false)
 
         chipsBox.removeAllViews()
@@ -296,9 +315,15 @@ class MainActivity : Activity() {
         c.addView(Ui.text(this, "+ Nueva", 16f, GOLD, 2, true))
         Ui.press(c)
         c.setOnClickListener {
+            // Hoja en blanco: sin nombre ni textos, y se pide el nombre
             selectedName = null
+            nameText = ""
+            labels = emptyList()
+            bells = 0
             refreshForm()
             reloadPresets()
+            etName.requestFocus()
+            (getSystemService(INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager).showSoftInput(etName, 0)
         }
         return c
     }
@@ -314,6 +339,7 @@ class MainActivity : Activity() {
         prep = p.prep
         labels = p.labels
         selectedName = p.name
+        nameText = p.name
         refreshForm()
         reloadPresets()
     }
@@ -344,32 +370,18 @@ class MainActivity : Activity() {
     }
 
     private fun saveAsPreset() {
-        val input = EditText(this).apply {
-            hint = "Nombre"
-            setText(selectedName ?: "")
-            setSingleLine(true)
-            setTextColor(TEXT)
-            setHintTextColor(MUTED)
-            setPadding(dp(20), dp(12), dp(20), dp(12))
+        val name = nameText.trim()
+        if (name.isEmpty()) {
+            toast("Ponle un nombre a la meditación")
+            etName.requestFocus()
+            return
         }
-        AlertDialog.Builder(this, THEME)
-            .setTitle("Guardar como preselección")
-            .setView(input)
-            .setPositiveButton("Guardar") { _, _ ->
-                val name = input.text.toString().trim()
-                if (name.isEmpty()) {
-                    toast("Escribe un nombre")
-                } else {
-                    // Mismo nombre = actualiza la preselección existente
-                    db.savePreset(Preset(name, minutes, bellCount(), prep, labels))
-                    selectedName = name
-                    refreshForm()
-                    reloadPresets()
-                    toast("Guardada")
-                }
-            }
-            .setNegativeButton("Cancelar", null)
-            .show()
+        // Mismo nombre = actualiza la preselección existente
+        db.savePreset(Preset(name, minutes, bellCount(), prep, labels))
+        selectedName = name
+        refreshForm()
+        reloadPresets()
+        toast("Guardada")
     }
 
     /** Diálogo para teclear los minutos (tocando el anillo). */
@@ -415,8 +427,8 @@ class MainActivity : Activity() {
             val n = Labels.parse(input.text.toString()).size
             counter.text = when (n) {
                 0 -> "Sin textos"
-                1 -> "1 campana detectada"
-                else -> "$n campanas detectadas"
+                1 -> "1 texto · solo el bong final"
+                else -> "$n textos · ${n - 1} campanas intermedias + bong final"
             }
         }
         input.onChanged { updateCounter() }
@@ -437,7 +449,7 @@ class MainActivity : Activity() {
     }
 
     /** Número de campanas: la de los textos si los hay, si no el stepper. */
-    private fun bellCount(): Int = if (labels.isNotEmpty()) labels.size else bells
+    private fun bellCount(): Int = if (labels.isNotEmpty()) (labels.size - 1).coerceAtLeast(0) else bells
 
     private fun loadCfg() {
         minutes = prefs.getInt("min", 20).coerceIn(1, MAX_MIN)
@@ -445,6 +457,7 @@ class MainActivity : Activity() {
         prep = prefs.getBoolean("prep", false)
         labels = Labels.parse(prefs.getString("labels", "") ?: "")
         selectedName = prefs.getString("selectedName", "")?.takeIf { it.isNotEmpty() }
+        nameText = prefs.getString("nameText", selectedName ?: "") ?: ""
     }
 
     private fun saveCfg() {
@@ -454,6 +467,7 @@ class MainActivity : Activity() {
             .putBoolean("prep", prep)
             .putString("labels", Labels.join(labels))
             .putString("selectedName", selectedName ?: "")
+            .putString("nameText", nameText)
             .apply()
     }
 
@@ -467,7 +481,7 @@ class MainActivity : Activity() {
             return
         }
         saveCfg()
-        MeditationService.start(this, minutes, bellCount(), prep, selectedName ?: "", labels)
+        MeditationService.start(this, minutes, bellCount(), prep, nameText.trim().ifEmpty { selectedName ?: "" }, labels)
         startAt = SystemClock.elapsedRealtime()
         showRun()
     }
@@ -511,7 +525,7 @@ class MainActivity : Activity() {
             ticksKey = key
             val sec = SessionState.plannedSec
             runRing.ticks = if (sec >= 60 && SessionState.totalBells > 0) {
-                Schedule.bellOffsetsSec(sec / 60, SessionState.totalBells).map { it / sec.toFloat() }
+                Schedule.tickFractions(SessionState.totalBells)
             } else {
                 emptyList()
             }
@@ -543,9 +557,9 @@ class MainActivity : Activity() {
             }
         }
 
-        // Texto de la campana actual; antes de la primera, «Inicio» si hay textos
-        if (SessionState.labels.isNotEmpty() && SessionState.bellsDone == 0) {
-            showLabel("Inicio", MUTED)
+        // Texto del tramo actual; durante la preparación se anuncia el primero
+        if (SessionState.labels.isNotEmpty() && ph == SessionState.PREP) {
+            showLabel("Primero: ${SessionState.labels[0]}", MUTED)
         } else {
             showLabel(SessionState.currentLabel, TEXT)
         }
@@ -556,7 +570,7 @@ class MainActivity : Activity() {
             ph == SessionState.FINISHING -> ""
             next > 0L -> {
                 val wait = Stats.clock(secs(next - now))
-                val name = SessionState.labels.getOrNull(SessionState.bellsDone)
+                val name = SessionState.labels.getOrNull(SessionState.bellsDone + 1)
                 if (name != null) "Siguiente: $name · en $wait" else "Próxima campana en $wait"
             }
             else -> "Solo queda el bong final"
@@ -626,8 +640,8 @@ class MainActivity : Activity() {
     /** Alterna entre la vista A y la B con un fundido de 250 ms. */
     private fun switchTo(run: Boolean, animate: Boolean) {
         inRun = run
-        val show = if (run) runView else configView
-        val hide = if (run) configView else runView
+        val show = if (run) runView else configWrap
+        val hide = if (run) configWrap else runView
         if (!run) reloadPresets()
         show.animate().cancel()
         hide.animate().cancel()

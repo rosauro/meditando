@@ -5,7 +5,7 @@ import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 
-/** [labels]: texto de cada campana intermedia. Si no está vacío, define cuántas campanas hay. */
+/** [labels]: texto de cada tramo (el 1.º suena al empezar). N textos = N-1 campanas intermedias + bong final. */
 data class Preset(
     val name: String,
     val minutes: Int,
@@ -13,7 +13,7 @@ data class Preset(
     val prep: Boolean,
     val labels: List<String> = emptyList(),
 ) {
-    val bellCount get() = if (labels.isNotEmpty()) labels.size else bells
+    val bellCount get() = if (labels.isNotEmpty()) (labels.size - 1).coerceAtLeast(0) else bells
 }
 
 /** Estado compartido de la sesión en curso (lo escribe MeditationService, lo lee la UI). */

@@ -88,8 +88,20 @@ class LabelsTest {
     @Test fun vacioDaListaVacia() = assertEquals(emptyList<String>(), Labels.parse("  \n ; "))
 
     @Test fun presetsPorDefectoTienenNueveTextos() {
-        assertEquals(9, Db.KUJI_IN.bellCount)
-        assertEquals(9, Db.KAMA_CHAKRA.bellCount)
+        assertEquals(8, Db.KUJI_IN.bellCount) // 9 textos = 9 tramos
+        assertEquals(8, Db.KAMA_CHAKRA.bellCount)
         assertEquals(5, Preset("x", 10, 5, false).bellCount)
+    }
+}
+
+class TickFractionsTest {
+    @Test fun sinCampanasNoHayMarcas() = assertEquals(emptyList<Float>(), Schedule.tickFractions(0))
+
+    @Test fun unaCampanaEstaEnLaMitad() = assertEquals(listOf(0.5f), Schedule.tickFractions(1))
+
+    @Test fun dosCampanasA120Grados() {
+        val t = Schedule.tickFractions(2)
+        assertEquals(1f / 3, t[0], 1e-6f)
+        assertEquals(2f / 3, t[1], 1e-6f)
     }
 }
