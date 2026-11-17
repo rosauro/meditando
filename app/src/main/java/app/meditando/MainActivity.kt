@@ -100,7 +100,11 @@ class MainActivity : Activity() {
     /** Último contador de campanas visto, para lanzar la onda una sola vez por campana. */
     private var lastBellCounter = -1
 
+    /** Idioma con el que se creó la pantalla: si cambia en Ajustes, al volver se recrea. */
+    private var shownLang = ""
+
     override fun attachBaseContext(base: Context) {
+        shownLang = Lang.get(base)
         super.attachBaseContext(Lang.wrap(base))
     }
 
@@ -129,6 +133,7 @@ class MainActivity : Activity() {
 
     override fun onResume() {
         super.onResume()
+        if (Lang.get(this) != shownLang) { recreate(); return }
         fillModeSelectors()
         handler.removeCallbacks(ticker)
         handler.post(ticker)

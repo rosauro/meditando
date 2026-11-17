@@ -25,7 +25,16 @@ class HistoryActivity : Activity() {
     private lateinit var body: LinearLayout
     private var sessions: List<SessionRec> = emptyList()
 
+    /** Idioma con el que se creó la pantalla: si cambia en Ajustes, al volver se recrea. */
+    private var shownLang = ""
+
+    override fun onResume() {
+        super.onResume()
+        if (Lang.get(this) != shownLang) recreate()
+    }
+
     override fun attachBaseContext(base: Context) {
+        shownLang = Lang.get(base)
         super.attachBaseContext(Lang.wrap(base))
     }
 
