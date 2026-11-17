@@ -4,6 +4,13 @@
 
 Un temporizador para meditar en Android. Sin anuncios, sin cuentas y sin donativos.
 
+<p align="center">
+  <img src="docs/screenshots/inicio-es.jpg" alt="Pantalla de inicio" width="190">
+  <img src="docs/screenshots/historial-es.jpg" alt="Historial" width="190">
+  <img src="docs/screenshots/ajustes-es.jpg" alt="Ajustes y actualizaciones" width="190">
+  <img src="docs/screenshots/home-en.jpg" alt="Home screen in English" width="190">
+</p>
+
 ## Cómo funciona
 
 1. **Elige cuánto tiempo** quieres meditar (por ejemplo, 20 minutos).
@@ -22,9 +29,13 @@ Más cosas, si las quieres:
 
 1. Entra en [Releases](https://github.com/rosauro/meditando/releases/latest) y descarga el archivo `.apk`.
 2. Ábrelo en el móvil. Android te pedirá permiso para «instalar apps desconocidas»: acéptalo.
+   - **Si Google Play Protect dice «Aplicación bloqueada»**: es normal en una app nueva de un desarrollador que no conoce. Pulsa **«Más detalles»** y luego **«Instalar de todas formas»**. El código es abierto, puedes revisarlo en este repositorio.
+
 3. Abre la app, ve a **Ajustes → Fiabilidad** y deja todo en verde para que suene con la pantalla apagada.
 
 Necesita Android 8.0 o superior.
+
+<p align="center"><img src="docs/screenshots/play-protect.jpg" alt="Aviso de Play Protect: Más detalles, Instalar de todas formas" width="220"></p>
 
 ## Actualizaciones
 
@@ -56,6 +67,7 @@ Extras: a **text for each bell** (paste a list, one per line, e.g. mantras), **p
 
 1. Go to [Releases](https://github.com/rosauro/meditando/releases/latest) and download the `.apk`.
 2. Open it on your phone and allow "install unknown apps".
+   - **If Google Play Protect says "App blocked"**: that is normal for a new app from a developer it does not know. Tap **"More details"** and then **"Install anyway"**. The code is open source, you can review it in this repository.
 3. In **Settings → Reliability**, turn everything green so it rings with the screen off.
 
 Requires Android 8.0+. The app checks this repository for new versions now and then (can be turned off in Settings → Updates). Everything stays on your phone; the internet is only used to check for updates.
