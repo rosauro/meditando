@@ -499,7 +499,8 @@ class MainActivity : Activity() {
     // ---------- Vista B: en curso ----------
 
     private fun buildRun(): LinearLayout {
-        val ringSize = minOf(resources.displayMetrics.widthPixels - dp(40), dp(320))
+        // Limitado también por la altura para que en móviles bajos no empuje el selector y el botón
+        val ringSize = minOf(resources.displayMetrics.widthPixels - dp(40), dp(320), (resources.displayMetrics.heightPixels * 0.38f).toInt())
         val col = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             gravity = Gravity.CENTER_HORIZONTAL
@@ -523,7 +524,7 @@ class MainActivity : Activity() {
         col.addView(Ui.secondaryButton(this, getString(R.string.main_stop)) {
             MeditationService.stop(this)
             startAt = 0L
-        }, Ui.lp(this, b = 24))
+        }, Ui.lp(this, t = 20, b = 24))
         return col
     }
 
