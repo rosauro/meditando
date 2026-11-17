@@ -8,7 +8,7 @@ Un temporizador para meditar en Android. Sin anuncios, sin cuentas y sin donativ
   <img src="docs/screenshots/kuji-in-es.jpg" alt="Pantalla de inicio con el Kuji-in" width="190">
   <img src="docs/screenshots/historial-es.jpg" alt="Historial" width="190">
   <img src="docs/screenshots/ajustes-es.jpg" alt="Ajustes y actualizaciones" width="190">
-  <img src="docs/screenshots/home-en.jpg" alt="Home screen in English" width="190">
+  <img src="docs/screenshots/editor-es.jpg" alt="Textos de las campanas" width="190">
 </p>
 
 ## Cómo funciona
@@ -54,6 +54,11 @@ Todo se queda en tu móvil. No hay anuncios ni seguimiento. Solo usa internet pa
 ## English
 
 A simple meditation timer for Android. No ads, no accounts, no donations.
+
+<p align="center">
+  <img src="docs/screenshots/home-en.jpg" alt="Home screen" width="190">
+  <img src="docs/screenshots/editor-en.jpg" alt="Bell texts" width="190">
+</p>
 
 ### How it works
 
