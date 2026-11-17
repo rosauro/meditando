@@ -309,8 +309,8 @@ class MainActivity : Activity() {
 
     private fun reloadPresets() {
         presetsBox.removeAllViews()
-        for (p in db.presets()) presetsBox.addView(presetCard(p), Ui.lp(this, w = dp(150), r = 10))
-        presetsBox.addView(newCard(), Ui.lp(this, w = dp(150), r = 10))
+        for (p in db.presets()) presetsBox.addView(presetCard(p), Ui.lp(this, w = dp(150), h = dp(112), r = 10))
+        presetsBox.addView(newCard(), Ui.lp(this, w = dp(150), h = dp(112), r = 10))
     }
 
     private fun presetCard(p: Preset): LinearLayout {
@@ -322,7 +322,10 @@ class MainActivity : Activity() {
             maxLines = 2
             ellipsize = TextUtils.TruncateAt.END
         })
-        c.addView(Ui.text(this, getString(R.string.main_preset_summary, p.minutes, bellsText(p.bellCount)), 13f, MUTED), Ui.lp(this, t = 6))
+        c.addView(Ui.text(this, getString(R.string.main_preset_summary, p.minutes, bellsText(p.bellCount)), 13f, MUTED).apply {
+            maxLines = 2
+            ellipsize = TextUtils.TruncateAt.END
+        }, Ui.lp(this, t = 6))
         Ui.press(c)
         c.setOnClickListener { selectPreset(p) }
         c.setOnLongClickListener { presetMenu(p); true }
@@ -335,7 +338,6 @@ class MainActivity : Activity() {
         c.orientation = LinearLayout.VERTICAL
         c.gravity = Gravity.CENTER
         c.background = cardBg(false)
-        c.minimumHeight = dp(76)
         c.setPadding(dp(14), dp(14), dp(14), dp(14))
         c.addView(Ui.text(this, getString(R.string.main_new_preset), 16f, GOLD, 2, true))
         Ui.press(c)
