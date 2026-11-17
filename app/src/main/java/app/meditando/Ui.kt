@@ -118,9 +118,9 @@ object Ui {
         val row = LinearLayout(c).apply { orientation = LinearLayout.HORIZONTAL }
         fun render() {
             row.removeAllViews()
-            listOf("Bongs" to Settings.MODE_BELLS, "Vibración" to Settings.MODE_VIBRATION, "Ambos" to Settings.MODE_BOTH)
-                .forEach { (label, mode) ->
-                    row.addView(chip(c, label, settings.mode == mode) {
+            listOf(R.string.ui_mode_bells to Settings.MODE_BELLS, R.string.ui_mode_vibration to Settings.MODE_VIBRATION, R.string.ui_mode_both to Settings.MODE_BOTH)
+                .forEach { (labelRes, mode) ->
+                    row.addView(chip(c, c.getString(labelRes), settings.mode == mode) {
                         settings.mode = mode
                         render()
                         onChange?.invoke()
@@ -133,9 +133,9 @@ object Ui {
     }
 
     private val TABS = listOf(
-        Triple("Meditar", R.drawable.ic_tab_meditar, MainActivity::class.java),
-        Triple("Historial", R.drawable.ic_tab_historial, HistoryActivity::class.java),
-        Triple("Ajustes", R.drawable.ic_tab_ajustes, SettingsActivity::class.java),
+        Triple(R.string.ui_tab_meditar, R.drawable.ic_tab_meditar, MainActivity::class.java),
+        Triple(R.string.ui_tab_historial, R.drawable.ic_tab_historial, HistoryActivity::class.java),
+        Triple(R.string.ui_tab_ajustes, R.drawable.ic_tab_ajustes, SettingsActivity::class.java),
     )
 
     /** Barra de pestañas inferior flotante. [current]: 0 Meditar, 1 Historial, 2 Ajustes. */
@@ -143,10 +143,10 @@ object Ui {
         orientation = LinearLayout.HORIZONTAL
         background = shape(a, SURFACE, 28, GOLD_DIM, 1)
         setPadding(dp(a, 8), dp(a, 6), dp(a, 8), dp(a, 6))
-        TABS.forEachIndexed { i, (label, icon, dest) ->
+        TABS.forEachIndexed { i, (labelRes, icon, dest) ->
             val color = if (i == current) GOLD else MUTED
             addView(TextView(a).apply {
-                text = label; textSize = 11f; typeface = font(2); setTextColor(color)
+                text = a.getString(labelRes); textSize = 11f; typeface = font(2); setTextColor(color)
                 gravity = Gravity.CENTER; includeFontPadding = false
                 setCompoundDrawablesRelativeWithIntrinsicBounds(0, icon, 0, 0)
                 compoundDrawableTintList = ColorStateList.valueOf(color)

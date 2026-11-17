@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="updater_channel">Actualizaciones</string>
+    <string name="updater_available_title">Nueva versión %1$s disponible</string>
+    <string name="updater_available_text">Toca para actualizar Meditando desde Ajustes</string>
+    <string name="updater_ready_title">Actualización %1$s lista</string>
+    <string name="updater_ready_text">Toca para instalar la nueva versión</string>
+</resources>

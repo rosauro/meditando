@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="main_title">Meditando</string>
+    <string name="main_presets_header">PRESELECCIONES</string>
+    <string name="main_name_hint">Nombre de la meditación</string>
+    <string name="main_minutes_unit">minutos</string>
+    <string name="main_bells_title">Campanas intermedias</string>
+    <string name="main_add_labels">Añadir textos a las campanas</string>
+    <string name="main_edit_labels">Editar textos (%1$d)</string>
+    <string name="main_no_labels">Sin textos</string>
+    <string name="main_only_final_sub">Solo el bong final</string>
+    <string name="main_every_min">Una cada %1$s min</string>
+    <string name="main_defined_by_labels">Definido por tus textos</string>
+    <string name="main_prep_label">Preparación de 10 s</string>
+    <string name="main_mode_header">AVISO AL SONAR</string>
+    <string name="main_mode_label">AVISO</string>
+    <string name="main_save_as_preset">Guardar como preselección</string>
+    <string name="main_save_changes">Guardar cambios</string>
+    <string name="main_start">Comenzar</string>
+    <string name="main_stop">Terminar</string>
+    <string name="main_new_preset">+ Nueva</string>
+    <string name="main_preset_summary">%1$d min · %2$s</string>
+    <string name="main_bells_only_final">solo bong final</string>
+    <string name="main_menu_edit_labels">Editar textos de campanas</string>
+    <string name="main_delete">Eliminar</string>
+    <string name="main_name_required">Ponle un nombre a la meditación</string>
+    <string name="main_saved">Guardada</string>
+    <string name="main_minutes_title">Minutos</string>
+    <string name="main_minutes_hint">1 a %1$d</string>
+    <string name="main_minutes_range">Minutos: entre 1 y %1$d</string>
+    <string name="main_accept">Aceptar</string>
+    <string name="main_cancel">Cancelar</string>
+    <string name="main_save">Guardar</string>
+    <string name="main_labels_title">Textos de las campanas</string>
+    <string name="main_labels_hint">Un texto por línea\n(o separados por «;»)</string>
+    <string name="main_labels_clear">Quitar textos</string>
+    <string name="main_no_volume_warning">El volumen multimedia está a cero: no se oirán los bongs</string>
+    <string name="main_first_label">Primero: %1$s</string>
+    <string name="main_next_named">Siguiente: %1$s · en %2$s</string>
+    <string name="main_next_bell">Próxima campana en %1$s</string>
+    <string name="main_run_only_final">Solo queda el bong final</string>
+    <string name="main_phase_prep">PREPARACIÓN</string>
+    <string name="main_phase_meditating">MEDITANDO</string>
+    <string name="main_phase_end">FIN</string>
+    <string name="main_phase_starting">INICIANDO</string>
+    <string name="main_prep_sub">preparación</string>
+    <string name="main_session_not_started">La sesión no ha arrancado</string>
+    <string name="main_battery_title">Sonido con la pantalla apagada</string>
+    <string name="main_battery_message">Para que las campanas suenen con la pantalla apagada, conviene excluir la app de la optimización de batería.</string>
+    <string name="main_open_settings">Abrir ajustes</string>
+    <string name="main_not_now">Ahora no</string>
+    <string name="main_settings_failed">No se pudieron abrir los ajustes</string>
+
+    <plurals name="main_bells">
+        <item quantity="one">%1$d campana</item>
+        <item quantity="other">%1$d campanas</item>
+    </plurals>
+    <plurals name="main_max_bells">
+        <item quantity="one">Como máximo %1$d campana</item>
+        <item quantity="other">Como máximo %1$d campanas</item>
+    </plurals>
+    <plurals name="main_labels_summary">
+        <item quantity="one">%1$d texto · solo el bong final</item>
+        <item quantity="other">%1$d textos · %2$d campanas intermedias + bong final</item>
+    </plurals>
+</resources>

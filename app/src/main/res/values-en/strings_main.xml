@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="main_title">Meditando</string>
+    <string name="main_presets_header">PRESETS</string>
+    <string name="main_name_hint">Meditation name</string>
+    <string name="main_minutes_unit">minutes</string>
+    <string name="main_bells_title">Intermediate bells</string>
+    <string name="main_add_labels">Add texts to the bells</string>
+    <string name="main_edit_labels">Edit texts (%1$d)</string>
+    <string name="main_no_labels">No texts</string>
+    <string name="main_only_final_sub">Only the final bong</string>
+    <string name="main_every_min">One every %1$s min</string>
+    <string name="main_defined_by_labels">Defined by your texts</string>
+    <string name="main_prep_label">10 s preparation</string>
+    <string name="main_mode_header">ALERT WHEN IT CHIMES</string>
+    <string name="main_mode_label">ALERT</string>
+    <string name="main_save_as_preset">Save as preset</string>
+    <string name="main_save_changes">Save changes</string>
+    <string name="main_start">Start</string>
+    <string name="main_stop">End</string>
+    <string name="main_new_preset">+ New</string>
+    <string name="main_preset_summary">%1$d min · %2$s</string>
+    <string name="main_bells_only_final">only final bong</string>
+    <string name="main_menu_edit_labels">Edit bell texts</string>
+    <string name="main_delete">Delete</string>
+    <string name="main_name_required">Give the meditation a name</string>
+    <string name="main_saved">Saved</string>
+    <string name="main_minutes_title">Minutes</string>
+    <string name="main_minutes_hint">1 to %1$d</string>
+    <string name="main_minutes_range">Minutes: between 1 and %1$d</string>
+    <string name="main_accept">OK</string>
+    <string name="main_cancel">Cancel</string>
+    <string name="main_save">Save</string>
+    <string name="main_labels_title">Bell texts</string>
+    <string name="main_labels_hint">One text per line\n(or separated by «;»)</string>
+    <string name="main_labels_clear">Remove texts</string>
+    <string name="main_no_volume_warning">Media volume is at zero: the bongs won\'t be heard</string>
+    <string name="main_first_label">First: %1$s</string>
+    <string name="main_next_named">Next: %1$s · in %2$s</string>
+    <string name="main_next_bell">Next bell in %1$s</string>
+    <string name="main_run_only_final">Only the final bong is left</string>
+    <string name="main_phase_prep">PREPARATION</string>
+    <string name="main_phase_meditating">MEDITATING</string>
+    <string name="main_phase_end">END</string>
+    <string name="main_phase_starting">STARTING</string>
+    <string name="main_prep_sub">preparation</string>
+    <string name="main_session_not_started">The session did not start</string>
+    <string name="main_battery_title">Sound with the screen off</string>
+    <string name="main_battery_message">For the bells to sound with the screen off, it\'s best to exclude the app from battery optimization.</string>
+    <string name="main_open_settings">Open settings</string>
+    <string name="main_not_now">Not now</string>
+    <string name="main_settings_failed">Could not open settings</string>
+
+    <plurals name="main_bells">
+        <item quantity="one">%1$d bell</item>
+        <item quantity="other">%1$d bells</item>
+    </plurals>
+    <plurals name="main_max_bells">
+        <item quantity="one">At most %1$d bell</item>
+        <item quantity="other">At most %1$d bells</item>
+    </plurals>
+    <plurals name="main_labels_summary">
+        <item quantity="one">%1$d text · only the final bong</item>
+        <item quantity="other">%1$d texts · %2$d intermediate bells + final bong</item>
+    </plurals>
+</resources>

@@ -2,6 +2,7 @@ package app.meditando
 
 import android.app.Activity
 import android.app.AlertDialog
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.view.Gravity
@@ -11,12 +12,12 @@ import android.widget.ScrollView
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
-import java.util.Locale
 
 /** Historial: totales, exportación CSV y sesiones por día (borrado con pulsación larga). */
 class HistoryActivity : Activity() {
     private val zone: ZoneId = ZoneId.systemDefault()
-    private val dayFmt = DateTimeFormatter.ofPattern("EEEE d MMM", Locale("es"))
+    // Se construye al primer uso (después de attachBaseContext) para respetar el idioma elegido
+    private val dayFmt by lazy { DateTimeFormatter.ofPattern("EEEE d MMM", Lang.locale(this)) }
     private val isoFmt = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
     private val hourFmt = DateTimeFormatter.ofPattern("HH:mm")
     private val db by lazy { Db(applicationContext) }
@@ -24,13 +25,17 @@ class HistoryActivity : Activity() {
     private lateinit var body: LinearLayout
     private var sessions: List<SessionRec> = emptyList()
 
+    override fun attachBaseContext(base: Context) {
+        super.attachBaseContext(Lang.wrap(base))
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val c = this
         body = LinearLayout(c).apply { orientation = LinearLayout.VERTICAL }
 
         val content = LinearLayout(c).apply { orientation = LinearLayout.VERTICAL }
-        content.addView(Ui.text(c, "Historial", 28f, Ui.TEXT, 0), Ui.lp(c, t = 8, b = 8))
+        content.addView(Ui.text(c, getString(R.string.history_title), 28f, Ui.TEXT, 0), Ui.lp(c, t = 8, b = 8))
         content.addView(body, Ui.lp(c))
 
         val page = LinearLayout(c).apply { orientation = LinearLayout.VERTICAL }
@@ -53,17 +58,17 @@ class HistoryActivity : Activity() {
         val now = System.currentTimeMillis()
         body.removeAllViews()
         body.addView(totalsCard(now), Ui.lp(c, t = 20))
-        body.addView(Ui.secondaryButton(c, "Exportar CSV") { exportCsv() }, Ui.lp(c, t = 16))
+        body.addView(Ui.secondaryButton(c, getString(R.string.history_export_csv)) { exportCsv() }, Ui.lp(c, t = 16))
 
         if (sessions.isEmpty()) {
-            body.addView(Ui.text(c, "Aún no has registrado ninguna sesión.", 16f, Ui.MUTED, 1, true), Ui.lp(c, t = 48))
+            body.addView(Ui.text(c, getString(R.string.history_empty), 16f, Ui.MUTED, 1, true), Ui.lp(c, t = 48))
             return
         }
 
         // groupBy conserva el orden: los días salen con el más reciente primero
         val byDay = sessions.groupBy { Instant.ofEpochMilli(it.startMs).atZone(zone).toLocalDate() }
         for ((day, list) in byDay) {
-            body.addView(Ui.text(c, day.format(dayFmt).uppercase(Locale("es")), 12f, Ui.MUTED),
+            body.addView(Ui.text(c, day.format(dayFmt).uppercase(Lang.locale(c)), 12f, Ui.MUTED),
                 Ui.lp(c, l = 4, t = 32, b = 4))
             list.forEach { body.addView(row(it), Ui.lp(c)) }
         }
@@ -76,9 +81,9 @@ class HistoryActivity : Activity() {
         val month = Stats.monthStart(now, zone)
         val card = Ui.card(c).apply { orientation = LinearLayout.HORIZONTAL }
         val cols = listOf(
-            Triple("Esta semana", Stats.totalSec(sessions, week), Stats.count(sessions, week)),
-            Triple("Este mes", Stats.totalSec(sessions, month), Stats.count(sessions, month)),
-            Triple("Total", Stats.totalSec(sessions), Stats.count(sessions)),
+            Triple(getString(R.string.history_week), Stats.totalSec(sessions, week), Stats.count(sessions, week)),
+            Triple(getString(R.string.history_month), Stats.totalSec(sessions, month), Stats.count(sessions, month)),
+            Triple(getString(R.string.history_total), Stats.totalSec(sessions), Stats.count(sessions)),
         )
         for ((label, sec, n) in cols) {
             val col = LinearLayout(c).apply {
@@ -86,7 +91,7 @@ class HistoryActivity : Activity() {
                 gravity = Gravity.CENTER_HORIZONTAL
                 addView(Ui.text(c, Stats.format(sec), 22f, Ui.TEXT, 0, true))
                 addView(Ui.text(c, label, 14f, Ui.TEXT, 1, true), Ui.lp(c, t = 4))
-                addView(Ui.text(c, if (n == 1) "1 sesión" else "$n sesiones", 12f, Ui.MUTED, 1, true))
+                addView(Ui.text(c, resources.getQuantityString(R.plurals.history_sessions, n, n), 12f, Ui.MUTED, 1, true))
             }
             card.addView(col, LinearLayout.LayoutParams(0, Ui.WRAP, 1f))
         }
@@ -94,6 +99,7 @@ class HistoryActivity : Activity() {
     }
 
     private fun exportCsv() {
+        // La cabecera es un formato de datos: los nombres de columna no se traducen
         val sb = StringBuilder("fecha,preset,previsto_seg,real_seg,completada\n")
         for (s in sessions) {
             val fecha = Instant.ofEpochMilli(s.startMs).atZone(zone).format(isoFmt)
@@ -105,10 +111,10 @@ class HistoryActivity : Activity() {
         }
         val send = Intent(Intent.ACTION_SEND).apply {
             type = "text/plain"
-            putExtra(Intent.EXTRA_SUBJECT, "Historial de meditación")
+            putExtra(Intent.EXTRA_SUBJECT, getString(R.string.history_mail_subject))
             putExtra(Intent.EXTRA_TEXT, sb.toString())
         }
-        startActivity(Intent.createChooser(send, "Exportar CSV"))
+        startActivity(Intent.createChooser(send, getString(R.string.history_export_csv)))
     }
 
     /** Escapa un campo CSV si contiene comas, comillas o saltos de línea. */
@@ -119,7 +125,7 @@ class HistoryActivity : Activity() {
     private fun row(s: SessionRec): View {
         val c = this
         val hora = Instant.ofEpochMilli(s.startMs).atZone(zone).format(hourFmt)
-        val estado = if (s.completed) "✓" else "(parada)"
+        val estado = if (s.completed) "✓" else getString(R.string.history_stopped)
         val r = LinearLayout(c).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
@@ -134,9 +140,9 @@ class HistoryActivity : Activity() {
 
     private fun confirmDelete(s: SessionRec) {
         AlertDialog.Builder(this, android.R.style.Theme_Material_Dialog_Alert)
-            .setTitle("¿Borrar esta sesión?")
-            .setPositiveButton("Borrar") { _, _ -> db.deleteSession(s.id); refresh() }
-            .setNegativeButton("Cancelar", null)
+            .setTitle(getString(R.string.history_delete_title))
+            .setPositiveButton(getString(R.string.history_delete_confirm)) { _, _ -> db.deleteSession(s.id); refresh() }
+            .setNegativeButton(getString(R.string.history_cancel), null)
             .show()
     }
 }

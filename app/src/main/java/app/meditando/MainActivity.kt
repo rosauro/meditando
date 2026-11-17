@@ -2,6 +2,7 @@ package app.meditando
 
 import android.app.Activity
 import android.app.AlertDialog
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.ColorStateList
@@ -99,6 +100,10 @@ class MainActivity : Activity() {
     /** Último contador de campanas visto, para lanzar la onda una sola vez por campana. */
     private var lastBellCounter = -1
 
+    override fun attachBaseContext(base: Context) {
+        super.attachBaseContext(Lang.wrap(base))
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         actionBar?.hide()
@@ -109,7 +114,7 @@ class MainActivity : Activity() {
         runView = buildRun()
         configWrap = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
         configWrap.addView(configView, LinearLayout.LayoutParams(MATCH, 0, 1f))
-        configWrap.addView(Ui.primaryButton(this, "Comenzar") { startFromForm() }, Ui.lp(this, t = 8))
+        configWrap.addView(Ui.primaryButton(this, getString(R.string.main_start)) { startFromForm() }, Ui.lp(this, t = 8))
         configWrap.addView(Ui.tabBar(this, 0), Ui.lp(this, t = 8))
         root.addView(configWrap, FrameLayout.LayoutParams(MATCH, MATCH))
         root.addView(runView, FrameLayout.LayoutParams(MATCH, MATCH))
@@ -149,11 +154,11 @@ class MainActivity : Activity() {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
         }
-        head.addView(Ui.text(this, "Meditando", 28f, TEXT, 0), LinearLayout.LayoutParams(0, Ui.WRAP, 1f))
+        head.addView(Ui.text(this, getString(R.string.main_title), 28f, TEXT, 0), LinearLayout.LayoutParams(0, Ui.WRAP, 1f))
         col.addView(head, Ui.lp(this, t = 8))
 
         // Preselecciones: tarjetas horizontales
-        col.addView(Ui.text(this, "PRESELECCIONES", 12f, MUTED, 2).apply { letterSpacing = 0.12f },
+        col.addView(Ui.text(this, getString(R.string.main_presets_header), 12f, MUTED, 2).apply { letterSpacing = 0.12f },
             Ui.lp(this, t = 28, b = 10))
         presetsBox = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
         col.addView(HorizontalScrollView(this).apply {
@@ -163,7 +168,7 @@ class MainActivity : Activity() {
 
         // Nombre de la meditación (visible siempre: al crear una nueva se escribe aquí)
         etName = EditText(this).apply {
-            hint = "Nombre de la meditación"; setSingleLine(true); textSize = 20f; typeface = Ui.font(0)
+            hint = getString(R.string.main_name_hint); setSingleLine(true); textSize = 20f; typeface = Ui.font(0)
             setTextColor(TEXT); setHintTextColor(MUTED)
             background = Ui.shape(this@MainActivity, SURFACE, 16)
             setPadding(dp(18), dp(14), dp(18), dp(14))
@@ -207,7 +212,7 @@ class MainActivity : Activity() {
             gravity = Gravity.CENTER_VERTICAL
         }
         val txt = column()
-        txt.addView(Ui.text(this, "Campanas intermedias", 16f, TEXT, 2))
+        txt.addView(Ui.text(this, getString(R.string.main_bells_title), 16f, TEXT, 2))
         tvBellsSub = Ui.text(this, "", 13f, MUTED)
         txt.addView(tvBellsSub, Ui.lp(this, t = 4))
         row.addView(txt, LinearLayout.LayoutParams(0, Ui.WRAP, 1f))
@@ -238,7 +243,7 @@ class MainActivity : Activity() {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
         }
-        prepRow.addView(Ui.text(this, "Preparación de 10 s", 17f, TEXT), LinearLayout.LayoutParams(0, Ui.WRAP, 1f))
+        prepRow.addView(Ui.text(this, getString(R.string.main_prep_label), 17f, TEXT), LinearLayout.LayoutParams(0, Ui.WRAP, 1f))
         swPrep = Switch(this)
         val states = arrayOf(intArrayOf(android.R.attr.state_checked), intArrayOf(-android.R.attr.state_checked))
         swPrep.thumbTintList = ColorStateList(states, intArrayOf(GOLD, MUTED))
@@ -248,13 +253,13 @@ class MainActivity : Activity() {
         col.addView(prepRow, Ui.lp(this, t = 28))
 
         // Aviso al sonar (bongs / vibración / ambos)
-        col.addView(Ui.text(this, "AVISO AL SONAR", 13f, MUTED, 2).apply { letterSpacing = 0.12f },
+        col.addView(Ui.text(this, getString(R.string.main_mode_header), 13f, MUTED, 2).apply { letterSpacing = 0.12f },
             Ui.lp(this, t = 28, b = 10))
         formModeBox = column()
         col.addView(formModeBox, Ui.lp(this))
 
         // Pie (el botón «Comenzar» va fijo en configWrap)
-        btnSave = Ui.secondaryButton(this, "Guardar como preselección") { saveAsPreset() }
+        btnSave = Ui.secondaryButton(this, getString(R.string.main_save_as_preset)) { saveAsPreset() }
         col.addView(btnSave, Ui.lp(this, t = 24, b = 24))
 
         return ScrollView(this).apply { addView(col) }
@@ -264,12 +269,12 @@ class MainActivity : Activity() {
     private fun refreshForm() {
         // Con una preselección elegida el nombre ya se ve en la tarjeta: se oculta el campo
         etName.visibility = if (selectedName == null) View.VISIBLE else View.GONE
-        btnSave.text = if (selectedName != null) "Guardar cambios" else "Guardar como preselección"
+        btnSave.text = if (selectedName != null) getString(R.string.main_save_changes) else getString(R.string.main_save_as_preset)
         if (etName.text.toString() != nameText) etName.setText(nameText)
         val n = bellCount()
 
         ring.centerText = minutes.toString()
-        ring.subText = "minutos"
+        ring.subText = getString(R.string.main_minutes_unit)
         ring.ticks = Schedule.tickFractions(n)
         ring.setProgress(0f, false)
 
@@ -283,8 +288,8 @@ class MainActivity : Activity() {
         tvBellsN.text = n.toString()
         val every = minutes.toDouble() / (n + 1)
         val everyTxt = if (every == Math.floor(every)) every.toInt().toString() else "%.1f".format(every)
-        val base = if (n == 0) "Solo el bong final" else "Una cada $everyTxt min"
-        tvBellsSub.text = if (labels.isNotEmpty()) "$base\nDefinido por tus textos" else base
+        val base = if (n == 0) getString(R.string.main_only_final_sub) else getString(R.string.main_every_min, everyTxt)
+        tvBellsSub.text = if (labels.isNotEmpty()) "$base\n${getString(R.string.main_defined_by_labels)}" else base
         val canMinus = editable && bells > 0
         val canPlus = editable && bells < Schedule.MAX_BELLS
         btnBellMinus.isEnabled = canMinus
@@ -292,7 +297,7 @@ class MainActivity : Activity() {
         btnBellPlus.isEnabled = canPlus
         btnBellPlus.alpha = if (canPlus) 1f else 0.35f
 
-        btnLabels.text = if (labels.isEmpty()) "Añadir textos a las campanas" else "Editar textos (${labels.size})"
+        btnLabels.text = if (labels.isEmpty()) getString(R.string.main_add_labels) else getString(R.string.main_edit_labels, labels.size)
         swPrep.isChecked = prep
         saveCfg()
     }
@@ -312,7 +317,7 @@ class MainActivity : Activity() {
             maxLines = 2
             ellipsize = TextUtils.TruncateAt.END
         })
-        c.addView(Ui.text(this, "${p.minutes} min · ${bellsText(p.bellCount)}", 13f, MUTED), Ui.lp(this, t = 6))
+        c.addView(Ui.text(this, getString(R.string.main_preset_summary, p.minutes, bellsText(p.bellCount)), 13f, MUTED), Ui.lp(this, t = 6))
         Ui.press(c)
         c.setOnClickListener { selectPreset(p) }
         c.setOnLongClickListener { presetMenu(p); true }
@@ -327,7 +332,7 @@ class MainActivity : Activity() {
         c.background = cardBg(false)
         c.minimumHeight = dp(76)
         c.setPadding(dp(14), dp(14), dp(14), dp(14))
-        c.addView(Ui.text(this, "+ Nueva", 16f, GOLD, 2, true))
+        c.addView(Ui.text(this, getString(R.string.main_new_preset), 16f, GOLD, 2, true))
         Ui.press(c)
         c.setOnClickListener {
             // Hoja en blanco: sin nombre ni textos, y se pide el nombre
@@ -363,7 +368,7 @@ class MainActivity : Activity() {
     private fun presetMenu(p: Preset) {
         AlertDialog.Builder(this, THEME)
             .setTitle(p.name)
-            .setItems(arrayOf<CharSequence>("Editar textos de campanas", "Eliminar")) { _, which ->
+            .setItems(arrayOf<CharSequence>(getString(R.string.main_menu_edit_labels), getString(R.string.main_delete))) { _, which ->
                 if (which == 0) {
                     editPresetLabels(p)
                 } else {
@@ -387,7 +392,7 @@ class MainActivity : Activity() {
     private fun saveAsPreset() {
         val name = nameText.trim()
         if (name.isEmpty()) {
-            toast("Ponle un nombre a la meditación")
+            toast(getString(R.string.main_name_required))
             etName.requestFocus()
             return
         }
@@ -396,7 +401,7 @@ class MainActivity : Activity() {
         selectedName = name
         refreshForm()
         reloadPresets()
-        toast("Guardada")
+        toast(getString(R.string.main_saved))
     }
 
     /** Diálogo para teclear los minutos (tocando el anillo). */
@@ -404,32 +409,32 @@ class MainActivity : Activity() {
         val input = EditText(this).apply {
             inputType = InputType.TYPE_CLASS_NUMBER
             setSingleLine(true)
-            hint = "1 a $MAX_MIN"
+            hint = getString(R.string.main_minutes_hint, MAX_MIN)
             setText(minutes.toString())
             setTextColor(TEXT)
             setHintTextColor(MUTED)
             setPadding(dp(20), dp(12), dp(20), dp(12))
         }
         AlertDialog.Builder(this, THEME)
-            .setTitle("Minutos")
+            .setTitle(getString(R.string.main_minutes_title))
             .setView(input)
-            .setPositiveButton("Aceptar") { _, _ ->
+            .setPositiveButton(getString(R.string.main_accept)) { _, _ ->
                 val v = input.text.toString().trim().toIntOrNull()
                 if (v != null && v in 1..MAX_MIN) {
                     minutes = v
                     refreshForm()
                 } else {
-                    toast("Minutos: entre 1 y $MAX_MIN")
+                    toast(getString(R.string.main_minutes_range, MAX_MIN))
                 }
             }
-            .setNegativeButton("Cancelar", null)
+            .setNegativeButton(getString(R.string.main_cancel), null)
             .show()
     }
 
     /** Editor de textos de las campanas: uno por línea, o separados por «;». */
     private fun openLabelsEditor(initial: List<String>, onResult: (List<String>) -> Unit) {
         val input = EditText(this).apply {
-            hint = "Un texto por línea\n(o separados por «;»)"
+            hint = getString(R.string.main_labels_hint)
             setText(Labels.join(initial))
             inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_MULTI_LINE
             minLines = 8
@@ -441,9 +446,8 @@ class MainActivity : Activity() {
         fun updateCounter() {
             val n = Labels.parse(input.text.toString()).size
             counter.text = when (n) {
-                0 -> "Sin textos"
-                1 -> "1 texto · solo el bong final"
-                else -> "$n textos · ${n - 1} campanas intermedias + bong final"
+                0 -> getString(R.string.main_no_labels)
+                else -> resources.getQuantityString(R.plurals.main_labels_summary, n, n, n - 1)
             }
         }
         input.onChanged { updateCounter() }
@@ -455,11 +459,11 @@ class MainActivity : Activity() {
         col.addView(counter, Ui.lp(this, t = 10))
 
         AlertDialog.Builder(this, THEME)
-            .setTitle("Textos de las campanas")
+            .setTitle(getString(R.string.main_labels_title))
             .setView(col)
-            .setPositiveButton("Guardar") { _, _ -> onResult(Labels.parse(input.text.toString())) }
-            .setNeutralButton("Quitar textos") { _, _ -> onResult(emptyList()) }
-            .setNegativeButton("Cancelar", null)
+            .setPositiveButton(getString(R.string.main_save)) { _, _ -> onResult(Labels.parse(input.text.toString())) }
+            .setNeutralButton(getString(R.string.main_labels_clear)) { _, _ -> onResult(emptyList()) }
+            .setNegativeButton(getString(R.string.main_cancel), null)
             .show()
     }
 
@@ -488,18 +492,18 @@ class MainActivity : Activity() {
 
     private fun startFromForm() {
         if (minutes !in 1..MAX_MIN) {
-            toast("Minutos: entre 1 y $MAX_MIN")
+            toast(getString(R.string.main_minutes_range, MAX_MIN))
             return
         }
         if (bellCount() > Schedule.MAX_BELLS) {
-            toast("Como máximo ${Schedule.MAX_BELLS} campanas")
+            toast(resources.getQuantityString(R.plurals.main_max_bells, Schedule.MAX_BELLS, Schedule.MAX_BELLS))
             return
         }
         saveCfg()
         // Aviso si el volumen multimedia está a cero y el modo usa sonido
         val am = getSystemService(android.media.AudioManager::class.java)
         if (app.meditando.Settings(this).sound && am.getStreamVolume(android.media.AudioManager.STREAM_MUSIC) == 0) {
-            toast("El volumen multimedia está a cero: no se oirán los bongs")
+            toast(getString(R.string.main_no_volume_warning))
         }
         MeditationService.start(this, minutes, bellCount(), prep, nameText.trim().ifEmpty { selectedName ?: "" }, labels)
         startAt = SystemClock.elapsedRealtime()
@@ -530,7 +534,7 @@ class MainActivity : Activity() {
         col.addView(spacer(1f))
         runModeBox = column()
         col.addView(runModeBox, Ui.lp(this, t = 24))
-        col.addView(Ui.secondaryButton(this, "Terminar") {
+        col.addView(Ui.secondaryButton(this, getString(R.string.main_stop)) {
             MeditationService.stop(this)
             startAt = 0L
         }, Ui.lp(this, b = 24))
@@ -555,15 +559,15 @@ class MainActivity : Activity() {
 
         setBreathing(ph == SessionState.MEDITATING)
         tvPhase.text = when (ph) {
-            SessionState.PREP -> "PREPARACIÓN"
-            SessionState.MEDITATING -> "MEDITANDO"
-            else -> "FIN"
+            SessionState.PREP -> getString(R.string.main_phase_prep)
+            SessionState.MEDITATING -> getString(R.string.main_phase_meditating)
+            else -> getString(R.string.main_phase_end)
         }
 
         when (ph) {
             SessionState.PREP -> {
                 runRing.centerText = Stats.clock(secs(SessionState.prepEnd - now))
-                runRing.subText = "preparación"
+                runRing.subText = getString(R.string.main_prep_sub)
                 runRing.setProgress(0f, false)
             }
             SessionState.MEDITATING -> {
@@ -581,7 +585,7 @@ class MainActivity : Activity() {
 
         // Texto del tramo actual; durante la preparación se anuncia el primero
         if (SessionState.labels.isNotEmpty() && ph == SessionState.PREP) {
-            showLabel("Primero: ${SessionState.labels[0]}", MUTED)
+            showLabel(getString(R.string.main_first_label, SessionState.labels[0]), MUTED)
         } else {
             showLabel(SessionState.currentLabel, TEXT)
         }
@@ -593,9 +597,9 @@ class MainActivity : Activity() {
             next > 0L -> {
                 val wait = Stats.clock(secs(next - now))
                 val name = SessionState.labels.getOrNull(SessionState.bellsDone + 1)
-                if (name != null) "Siguiente: $name · en $wait" else "Próxima campana en $wait"
+                if (name != null) getString(R.string.main_next_named, name, wait) else getString(R.string.main_next_bell, wait)
             }
-            else -> "Solo queda el bong final"
+            else -> getString(R.string.main_run_only_final)
         }
 
         // Onda al sonar cada campana
@@ -615,14 +619,14 @@ class MainActivity : Activity() {
         formModeBox.removeAllViews()
         formModeBox.addView(Ui.modeSelector(this, s), Ui.lp(this))
         runModeBox.removeAllViews()
-        runModeBox.addView(Ui.text(this, "AVISO", 13f, MUTED, 2, true).apply { letterSpacing = 0.12f },
+        runModeBox.addView(Ui.text(this, getString(R.string.main_mode_label), 13f, MUTED, 2, true).apply { letterSpacing = 0.12f },
             Ui.lp(this, b = 10))
         runModeBox.addView(Ui.modeSelector(this, s), Ui.lp(this))
     }
 
     /** Vista de arranque: el servicio aún no ha publicado su estado. */
     private fun showStarting() {
-        tvPhase.text = "INICIANDO"
+        tvPhase.text = getString(R.string.main_phase_starting)
         setBreathing(false)
         runRing.centerText = "--:--"
         runRing.subText = ""
@@ -663,7 +667,7 @@ class MainActivity : Activity() {
                 showStarting()
             }
             else -> {
-                if (startAt != 0L) toast("La sesión no ha arrancado")
+                if (startAt != 0L) toast(getString(R.string.main_session_not_started))
                 startAt = 0L
                 if (inRun) showConfig()
             }
@@ -716,10 +720,10 @@ class MainActivity : Activity() {
 
     private fun showBatteryDialog() {
         AlertDialog.Builder(this, THEME)
-            .setTitle("Sonido con la pantalla apagada")
-            .setMessage("Para que las campanas suenen con la pantalla apagada, conviene excluir la app de la optimización de batería.")
-            .setPositiveButton("Abrir ajustes") { _, _ -> openBatterySettings() }
-            .setNegativeButton("Ahora no", null)
+            .setTitle(getString(R.string.main_battery_title))
+            .setMessage(getString(R.string.main_battery_message))
+            .setPositiveButton(getString(R.string.main_open_settings)) { _, _ -> openBatterySettings() }
+            .setNegativeButton(getString(R.string.main_not_now), null)
             .show()
     }
 
@@ -727,7 +731,7 @@ class MainActivity : Activity() {
         try {
             startActivity(Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, Uri.parse("package:$packageName")))
         } catch (e: Exception) {
-            toast("No se pudieron abrir los ajustes")
+            toast(getString(R.string.main_settings_failed))
         }
     }
 
@@ -753,11 +757,9 @@ class MainActivity : Activity() {
 
     private fun roundLp() = LinearLayout.LayoutParams(dp(48), dp(48)).apply { setMargins(dp(6), 0, dp(6), 0) }
 
-    private fun bellsText(n: Int) = when (n) {
-        0 -> "solo bong final"
-        1 -> "1 campana"
-        else -> "$n campanas"
-    }
+    private fun bellsText(n: Int): String =
+        if (n == 0) getString(R.string.main_bells_only_final)
+        else resources.getQuantityString(R.plurals.main_bells, n, n)
 
     private fun EditText.onChanged(f: () -> Unit) {
         addTextChangedListener(object : TextWatcher {

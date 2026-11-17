@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="history_title">History</string>
+    <string name="history_week">This week</string>
+    <string name="history_month">This month</string>
+    <string name="history_total">Total</string>
+    <plurals name="history_sessions">
+        <item quantity="one">%1$d session</item>
+        <item quantity="other">%1$d sessions</item>
+    </plurals>
+    <string name="history_empty">You haven\'t recorded any sessions yet.</string>
+    <string name="history_export_csv">Export CSV</string>
+    <string name="history_mail_subject">Meditation history</string>
+    <string name="history_stopped">(stopped)</string>
+    <string name="history_delete_title">Delete this session?</string>
+    <string name="history_delete_confirm">Delete</string>
+    <string name="history_cancel">Cancel</string>
+</resources>

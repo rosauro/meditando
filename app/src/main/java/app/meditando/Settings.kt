@@ -13,7 +13,7 @@ class Settings(ctx: Context) {
     }
 
     var mode: Int
-        get() = p.getInt("mode", MODE_BELLS)
+        get() = p.getInt("mode", MODE_BOTH)
         set(v) { p.edit().putInt("mode", v).apply() }
 
     /** Volumen del bong final, 0–100. */
@@ -25,6 +25,20 @@ class Settings(ctx: Context) {
     var volSoft: Int
         get() = p.getInt("volSoft", 70)
         set(v) { p.edit().putInt("volSoft", v.coerceIn(0, 100)).apply() }
+
+    /** Idioma de la interfaz: «es» (por defecto) o «en». No sigue al idioma del móvil. */
+    var lang: String
+        get() = p.getString("lang", Lang.ES) ?: Lang.ES
+        set(v) { p.edit().putString("lang", v).apply() }
+
+    /** Buscar actualizaciones en GitHub automáticamente. */
+    var autoUpdate: Boolean
+        get() = p.getBoolean("autoUpdate", true)
+        set(v) { p.edit().putBoolean("autoUpdate", v).apply() }
+
+    var lastCheck: Long
+        get() = p.getLong("lastCheck", 0L)
+        set(v) { p.edit().putLong("lastCheck", v).apply() }
 
     val sound get() = mode != MODE_VIBRATION
     val vibrate get() = mode != MODE_BELLS

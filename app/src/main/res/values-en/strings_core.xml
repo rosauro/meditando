@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Meditation service (notification) -->
+    <string name="service_channel_name">Meditando</string>
+    <string name="service_notif_text">Meditando · %1$s</string>
+    <string name="service_stop">Stop</string>
+
+    <!-- UI: bottom bar and alert selector -->
+    <string name="ui_tab_meditar">Meditate</string>
+    <string name="ui_tab_historial">History</string>
+    <string name="ui_tab_ajustes">Settings</string>
+    <string name="ui_mode_bells">Bells</string>
+    <string name="ui_mode_vibration">Vibration</string>
+    <string name="ui_mode_both">Both</string>
+</resources>

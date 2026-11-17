@@ -67,6 +67,8 @@ class MeditationService : Service() {
     private val tick = Runnable { fireDue() }
     private var restored = false // true solo durante la puesta al día de una sesión recuperada
 
+    override fun attachBaseContext(base: Context) { super.attachBaseContext(Lang.wrap(base)) }
+
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
             ACTION_START -> startSession(intent)
@@ -125,7 +127,7 @@ class MeditationService : Service() {
         SessionState.phase = if (prep) SessionState.PREP else SessionState.MEDITATING
 
         // Primer plano lo antes posible
-        goForeground(buildNotif(sessionName, medEnd, SessionState.currentLabel.ifEmpty { "Meditando · $sessionName" }))
+        goForeground(buildNotif(sessionName, medEnd, SessionState.currentLabel.ifEmpty { getString(R.string.service_notif_text, sessionName) }))
 
         // Mantener la CPU despierta lo que queda de sesión + margen
         val pm = getSystemService(Context.POWER_SERVICE) as PowerManager
@@ -269,9 +271,9 @@ class MeditationService : Service() {
         Feedback.trigger(this, final, onDone)?.let { players.add(it) }
     }
 
-    private fun buildNotif(name: String, medEndElapsed: Long, text: String = "Meditando · $name"): Notification {
+    private fun buildNotif(name: String, medEndElapsed: Long, text: String? = null): Notification {
         val nm = getSystemService(NotificationManager::class.java)
-        nm.createNotificationChannel(NotificationChannel(CHANNEL_ID, "Meditando", NotificationManager.IMPORTANCE_LOW))
+        nm.createNotificationChannel(NotificationChannel(CHANNEL_ID, getString(R.string.service_channel_name), NotificationManager.IMPORTANCE_LOW))
 
         val openApp = PendingIntent.getActivity(
             this, 0, Intent(this, MainActivity::class.java),
@@ -285,7 +287,7 @@ class MeditationService : Service() {
 
         return Notification.Builder(this, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_launcher)
-            .setContentText(text)
+            .setContentText(text ?: getString(R.string.service_notif_text, name))
             .setContentIntent(openApp)
             .setOngoing(true)
             .setShowWhen(true)
@@ -294,7 +296,7 @@ class MeditationService : Service() {
             .setWhen(System.currentTimeMillis() + remainingMs)
             .addAction(
                 Notification.Action.Builder(
-                    Icon.createWithResource(this, R.drawable.ic_launcher), "Parar", stopPi
+                    Icon.createWithResource(this, R.drawable.ic_launcher), getString(R.string.service_stop), stopPi
                 ).build()
             )
             .build()
