@@ -1,7 +1,6 @@
 package app.meditando
 
 import android.app.Activity
-import android.app.AlertDialog
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
@@ -148,10 +147,10 @@ class HistoryActivity : Activity() {
     }
 
     private fun confirmDelete(s: SessionRec) {
-        AlertDialog.Builder(this, android.R.style.Theme_Material_Dialog_Alert)
-            .setTitle(getString(R.string.history_delete_title))
-            .setPositiveButton(getString(R.string.history_delete_confirm)) { _, _ -> db.deleteSession(s.id); refresh() }
-            .setNegativeButton(getString(R.string.history_cancel), null)
-            .show()
+        Ui.dialog(this) {
+            title(getString(R.string.history_delete_title))
+            danger(getString(R.string.history_delete_confirm)) { db.deleteSession(s.id); refresh() }
+            cancel(getString(R.string.history_cancel))
+        }
     }
 }

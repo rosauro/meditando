@@ -106,6 +106,26 @@ object Ui {
             clickable(this, onClick)
         }
 
+    /** Campo de texto con el estilo de la app (para diálogos). [minLines] > 1 → multilínea. */
+    fun inputField(c: Context, hint: String, text: String = "", minLines: Int = 1) = android.widget.EditText(c).apply {
+        setText(text)
+        this.hint = hint
+        textSize = 18f
+        typeface = font(0)
+        setTextColor(TEXT)
+        setHintTextColor(MUTED)
+        background = shape(c, SURFACE2, 14)
+        setPadding(dp(c, 16), dp(c, 12), dp(c, 16), dp(c, 12))
+        if (minLines > 1) {
+            setMinLines(minLines)
+            gravity = Gravity.TOP or Gravity.START
+            inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_FLAG_MULTI_LINE or
+                android.text.InputType.TYPE_TEXT_FLAG_CAP_SENTENCES
+        } else {
+            setSingleLine(true)
+        }
+    }
+
     /** Tarjeta vertical con fondo de superficie. */
     fun card(c: Context) = LinearLayout(c).apply {
         orientation = LinearLayout.VERTICAL

@@ -1,7 +1,6 @@
 package app.meditando
 
 import android.app.Activity
-import android.app.AlertDialog
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -41,7 +40,6 @@ class MainActivity : Activity() {
     private val GOLD_DIM = Ui.GOLD_DIM
     private val SURFACE = Ui.SURFACE
     private val SURFACE2 = Ui.SURFACE2
-    private val THEME = android.R.style.Theme_Material_Dialog_Alert
     private val MAX_MIN = 600
     private val MATCH = ViewGroup.LayoutParams.MATCH_PARENT
 
@@ -373,19 +371,17 @@ class MainActivity : Activity() {
 
     /** Pulsación larga sobre una preselección. */
     private fun presetMenu(p: Preset) {
-        AlertDialog.Builder(this, THEME)
-            .setTitle(p.name)
-            .setItems(arrayOf<CharSequence>(getString(R.string.main_menu_edit_labels), getString(R.string.main_delete))) { _, which ->
-                if (which == 0) {
-                    editPresetLabels(p)
-                } else {
-                    db.deletePreset(p.name)
-                    if (selectedName == p.name) selectedName = null
-                    refreshForm()
-                    reloadPresets()
-                }
+        Ui.dialog(this) {
+            title(p.name)
+            secondary(getString(R.string.main_menu_edit_labels)) { editPresetLabels(p) }
+            danger(getString(R.string.main_delete)) {
+                db.deletePreset(p.name)
+                if (selectedName == p.name) selectedName = null
+                refreshForm()
+                reloadPresets()
             }
-            .show()
+            cancel(getString(R.string.main_cancel))
+        }
     }
 
     private fun editPresetLabels(p: Preset) {
@@ -413,19 +409,14 @@ class MainActivity : Activity() {
 
     /** Diálogo para teclear los minutos (tocando el anillo). */
     private fun askMinutes() {
-        val input = EditText(this).apply {
+        val input = Ui.inputField(this, getString(R.string.main_minutes_hint, MAX_MIN), minutes.toString()).apply {
             inputType = InputType.TYPE_CLASS_NUMBER
             setSingleLine(true)
-            hint = getString(R.string.main_minutes_hint, MAX_MIN)
-            setText(minutes.toString())
-            setTextColor(TEXT)
-            setHintTextColor(MUTED)
-            setPadding(dp(20), dp(12), dp(20), dp(12))
         }
-        AlertDialog.Builder(this, THEME)
-            .setTitle(getString(R.string.main_minutes_title))
-            .setView(input)
-            .setPositiveButton(getString(R.string.main_accept)) { _, _ ->
+        Ui.dialog(this) {
+            title(getString(R.string.main_minutes_title))
+            view(input)
+            primary(getString(R.string.main_accept)) {
                 val v = input.text.toString().trim().toIntOrNull()
                 if (v != null && v in 1..MAX_MIN) {
                     minutes = v
@@ -434,21 +425,13 @@ class MainActivity : Activity() {
                     toast(getString(R.string.main_minutes_range, MAX_MIN))
                 }
             }
-            .setNegativeButton(getString(R.string.main_cancel), null)
-            .show()
+            cancel(getString(R.string.main_cancel))
+        }
     }
 
     /** Editor de textos de las campanas: uno por línea, o separados por «;». */
     private fun openLabelsEditor(initial: List<String>, onResult: (List<String>) -> Unit) {
-        val input = EditText(this).apply {
-            hint = getString(R.string.main_labels_hint)
-            setText(Labels.join(initial))
-            inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_MULTI_LINE
-            minLines = 8
-            gravity = Gravity.TOP or Gravity.START
-            setTextColor(TEXT)
-            setHintTextColor(MUTED)
-        }
+        val input = Ui.inputField(this, getString(R.string.main_labels_hint), Labels.join(initial), 8)
         val counter = Ui.text(this, "", 13f, MUTED)
         fun updateCounter() {
             val n = Labels.parse(input.text.toString()).size
@@ -460,18 +443,14 @@ class MainActivity : Activity() {
         input.onChanged { updateCounter() }
         updateCounter()
 
-        val col = column()
-        col.setPadding(dp(20), dp(8), dp(20), dp(8))
-        col.addView(input, Ui.lp(this))
-        col.addView(counter, Ui.lp(this, t = 10))
-
-        AlertDialog.Builder(this, THEME)
-            .setTitle(getString(R.string.main_labels_title))
-            .setView(col)
-            .setPositiveButton(getString(R.string.main_save)) { _, _ -> onResult(Labels.parse(input.text.toString())) }
-            .setNeutralButton(getString(R.string.main_labels_clear)) { _, _ -> onResult(emptyList()) }
-            .setNegativeButton(getString(R.string.main_cancel), null)
-            .show()
+        Ui.dialog(this) {
+            title(getString(R.string.main_labels_title))
+            view(input)
+            view(counter)
+            primary(getString(R.string.main_save)) { onResult(Labels.parse(input.text.toString())) }
+            secondary(getString(R.string.main_labels_clear)) { onResult(emptyList()) }
+            cancel(getString(R.string.main_cancel))
+        }
     }
 
     /** Número de campanas: la de los textos si los hay, si no el stepper. */
@@ -726,12 +705,12 @@ class MainActivity : Activity() {
     }
 
     private fun showBatteryDialog() {
-        AlertDialog.Builder(this, THEME)
-            .setTitle(getString(R.string.main_battery_title))
-            .setMessage(getString(R.string.main_battery_message))
-            .setPositiveButton(getString(R.string.main_open_settings)) { _, _ -> openBatterySettings() }
-            .setNegativeButton(getString(R.string.main_not_now), null)
-            .show()
+        Ui.dialog(this) {
+            title(getString(R.string.main_battery_title))
+            message(getString(R.string.main_battery_message))
+            primary(getString(R.string.main_open_settings)) { openBatterySettings() }
+            cancel(getString(R.string.main_not_now))
+        }
     }
 
     private fun openBatterySettings() {
