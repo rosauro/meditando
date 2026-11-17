@@ -5,7 +5,7 @@
 Un temporizador para meditar en Android. Sin anuncios, sin cuentas y sin donativos.
 
 <p align="center">
-  <img src="docs/screenshots/inicio-es.jpg" alt="Pantalla de inicio" width="190">
+  <img src="docs/screenshots/kuji-in-es.jpg" alt="Pantalla de inicio con el Kuji-in" width="190">
   <img src="docs/screenshots/historial-es.jpg" alt="Historial" width="190">
   <img src="docs/screenshots/ajustes-es.jpg" alt="Ajustes y actualizaciones" width="190">
   <img src="docs/screenshots/home-en.jpg" alt="Home screen in English" width="190">
