@@ -144,7 +144,7 @@ object Ui {
                         settings.mode = mode
                         render()
                         onChange?.invoke()
-                    }.apply { setSingleLine(true); setPadding(dp(c, 4), 0, dp(c, 4), 0); textSize = 14f },
+                    }.apply { maxLines = 1; setPadding(dp(c, 4), 0, dp(c, 4), 0); textSize = 14f; minHeight = dp(c, 40); minimumHeight = dp(c, 40) },
                         LinearLayout.LayoutParams(0, WRAP, 1f).apply { setMargins(dp(c, 4), 0, dp(c, 4), 0) })
                 }
         }

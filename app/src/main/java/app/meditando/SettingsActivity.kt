@@ -122,7 +122,7 @@ class SettingsActivity : Activity() {
                     settings.lang = code
                     recreate()
                 }
-            }.apply { setSingleLine(true); setPadding(Ui.dp(c, 4), 0, Ui.dp(c, 4), 0); textSize = 14f },
+            }.apply { maxLines = 1; setPadding(Ui.dp(c, 4), 0, Ui.dp(c, 4), 0); textSize = 14f; minHeight = Ui.dp(c, 40); minimumHeight = Ui.dp(c, 40) },
                 LinearLayout.LayoutParams(0, Ui.WRAP, 1f).apply { setMargins(Ui.dp(c, 4), 0, Ui.dp(c, 4), 0) })
         }
         langCard.addView(row, Ui.lp(c))
@@ -321,7 +321,7 @@ class SettingsActivity : Activity() {
             row.addView(Ui.chip(c, name, settings.mode == m) {
                 settings.mode = m
                 renderMode()
-            }.apply { setSingleLine(true); setPadding(Ui.dp(c, 4), 0, Ui.dp(c, 4), 0); textSize = 14f }, LinearLayout.LayoutParams(0, Ui.WRAP, 1f).apply { setMargins(Ui.dp(c, 4), 0, Ui.dp(c, 4), 0) })
+            }.apply { maxLines = 1; setPadding(Ui.dp(c, 4), 0, Ui.dp(c, 4), 0); textSize = 14f; minHeight = Ui.dp(c, 40); minimumHeight = Ui.dp(c, 40) }, LinearLayout.LayoutParams(0, Ui.WRAP, 1f).apply { setMargins(Ui.dp(c, 4), 0, Ui.dp(c, 4), 0) })
         }
         modeCard.addView(row, Ui.lp(c))
         modeCard.addView(Ui.text(c, modeHint(settings.mode), 14f, Ui.MUTED), Ui.lp(c, t = 16))
